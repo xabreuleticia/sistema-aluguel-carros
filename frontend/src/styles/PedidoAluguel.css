@@ -1,0 +1,221 @@
+
+.pedido-page {
+  min-height: 100vh;
+  padding: 40px 5% 80px;
+  background: #f5f2e9;
+  color: #092c24;
+}
+
+.pedido-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pedido-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #123d32;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.pedido-heading {
+  margin: 36px 0;
+}
+
+.pedido-eyebrow,
+.pedido-resumo-label {
+  color: #77796f;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+}
+
+.pedido-heading h1 {
+  margin: 12px 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+  font-weight: 400;
+}
+
+.pedido-heading p {
+  color: #77796f;
+}
+
+.pedido-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+  align-items: start;
+  gap: 28px;
+}
+
+.pedido-form,
+.pedido-resumo {
+  padding: 30px;
+  border: 1px solid #deded4;
+  background: #fffefb;
+}
+
+.pedido-form-section + .pedido-form-section {
+  margin-top: 30px;
+  padding-top: 26px;
+  border-top: 1px solid #deded4;
+}
+
+.pedido-form-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 20px;
+  font-size: 1.15rem;
+}
+
+.pedido-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.pedido-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  color: #55584f;
+  font-size: 0.9rem;
+}
+
+.pedido-form input,
+.pedido-form textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #deded4;
+  border-radius: 0;
+  background: #fff;
+  color: #092c24;
+  font: inherit;
+}
+
+.pedido-form textarea {
+  resize: vertical;
+}
+
+.pedido-form input:focus,
+.pedido-form textarea:focus {
+  outline: 2px solid #123d32;
+  outline-offset: 1px;
+}
+
+.pedido-submit {
+  width: 100%;
+  margin-top: 28px;
+  padding: 15px;
+  border: 0;
+  background: #123d32;
+  color: white;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pedido-submit:hover {
+  background: #092c24;
+}
+
+.pedido-resumo {
+  position: sticky;
+  top: 100px;
+}
+
+.pedido-resumo img {
+  width: 100%;
+  height: 190px;
+  margin: 20px 0;
+  object-fit: cover;
+}
+
+.pedido-resumo h2 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #77796f;
+}
+
+.pedido-modelo {
+  margin: 5px 0 24px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.7rem;
+}
+
+.pedido-resumo-linha,
+.pedido-resumo-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid #deded4;
+  font-size: 0.9rem;
+}
+
+.pedido-resumo-total {
+  margin-top: 8px;
+  align-items: center;
+  font-size: 1rem;
+}
+
+.pedido-resumo-total strong {
+  font-size: 1.35rem;
+}
+
+.pedido-nota {
+  color: #77796f;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.pedido-mensagem {
+  margin-top: 22px;
+  padding: 16px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.pedido-erro {
+  border: 1px solid #d9a4a4;
+  background: #fff0f0;
+  color: #8c2929;
+}
+
+.pedido-sucesso {
+  border: 1px solid #a7c6ad;
+  background: #eff8f0;
+  color: #245c32;
+}
+
+.pedido-sucesso p {
+  margin: 6px 0 0;
+}
+
+@media (max-width: 800px) {
+  .pedido-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pedido-resumo {
+    position: static;
+  }
+}
+
+@media (max-width: 500px) {
+  .pedido-page {
+    padding: 28px 4% 50px;
+  }
+
+  .pedido-form,
+  .pedido-resumo {
+    padding: 20px;
+  }
+
+  .pedido-fields {
+    grid-template-columns: 1fr;
+  }
+}

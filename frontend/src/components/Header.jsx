@@ -18,6 +18,7 @@ export default function Header() {
 
     async function verificarSessao() {
       setCarregando(true);
+      setErro("");
 
       try {
         const dados = await usuarioAtual();
@@ -41,7 +42,7 @@ export default function Header() {
     return () => {
       ativo = false;
     };
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   async function handleSair() {
     setSaindo(true);
@@ -58,23 +59,56 @@ export default function Header() {
     }
   }
 
+  function linkAtivo(caminho) {
+    return location.pathname === caminho
+      ? "ativo"
+      : "";
+  }
+
   return (
     <header className="site-header">
       <Link to="/" className="site-logo">
         VÉRTICE
       </Link>
 
-      <nav className="site-nav">
-        <Link to="/">Início</Link>
-        <Link to="/carros">Carros</Link>
-        <Link to="/sobre">Sobre</Link>
+      <nav className="site-nav" aria-label="Navegação principal">
+        <Link to="/" className={linkAtivo("/")}>
+          Início
+        </Link>
 
-        {usuario?.perfil === "CLIENTE" && (
-          <Link to="/pedidos">Meus pedidos</Link>
+        <Link to="/carros" className={linkAtivo("/carros")}>
+          Carros
+        </Link>
+
+        <Link to="/sobre" className={linkAtivo("/sobre")}>
+          Sobre
+        </Link>
+
+        {!carregando && usuario?.perfil === "CLIENTE" && (
+          <>
+            <Link
+              to="/pedidos"
+              className={linkAtivo("/pedidos")}
+            >
+              Meus pedidos
+            </Link>
+
+            <Link
+              to="/perfil"
+              className={linkAtivo("/perfil")}
+            >
+              Meu perfil
+            </Link>
+          </>
         )}
 
-        {usuario?.perfil === "AGENTE" && (
-          <Link to="/agente">Painel do agente</Link>
+        {!carregando && usuario?.perfil === "AGENTE" && (
+          <Link
+            to="/agente"
+            className={linkAtivo("/agente")}
+          >
+            Painel do agente
+          </Link>
         )}
       </nav>
 

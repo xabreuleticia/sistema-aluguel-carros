@@ -20,13 +20,19 @@ public class LoginService {
 
     public LoginService(
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder) {
-
+            PasswordEncoder passwordEncoder
+    ) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     public Usuario validarCredenciais(LoginRequest dados) {
+
+        if (dados == null
+                || dados.email() == null
+                || dados.senha() == null) {
+            throw credenciaisInvalidas();
+        }
 
         String email = dados.email()
                 .trim()
@@ -34,31 +40,49 @@ public class LoginService {
 
         Usuario usuario = usuarioRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED,
-                        "E-mail ou senha incorretos."
-                ));
+                .orElseThrow(this::credenciaisInvalidas);
 
-        if (!passwordEncoder.matches(
-                dados.senha(),
-                usuario.getSenhaHash())) {
+        if (!usuario.isAtivo()
+                || !passwordEncoder.matches(
+                        dados.senha(),
+                        usuario.getSenhaHash()
+                )) {
+            throw credenciaisInvalidas();
+        }
 
+        return usuario;
+    }
+
+    public Usuario buscarPorEmail(String email) {
+
+        if (email == null) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
-                    "E-mail ou senha incorretos."
+                    "Usuário não autenticado."
+            );
+        }
+
+        Usuario usuario = usuarioRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Usuário não encontrado."
+                ));
+
+        if (!usuario.isAtivo()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Esta conta está desativada."
             );
         }
 
         return usuario;
     }
 
-    
-    public Usuario buscarPorEmail(String email) {
-        return usuarioRepository.findByEmail(email)
-            .orElseThrow(() -> new ResponseStatusException(
+    private ResponseStatusException credenciaisInvalidas() {
+        return new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED,
-                "Usuário não encontrado."
-            ));
+                "E-mail ou senha incorretos."
+        );
     }
-
 }

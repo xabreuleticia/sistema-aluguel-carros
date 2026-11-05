@@ -37,43 +37,37 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // Permite obter o token CSRF
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/auth/csrf"
                 ).permitAll()
 
-                // Permite cadastro e login
                 .requestMatchers(
                     HttpMethod.POST,
                     "/api/auth/cadastro",
                     "/api/auth/login"
                 ).permitAll()
 
-                // Permite consultar os automóveis disponíveis
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/automoveis"
                 ).permitAll()
 
-                // Permite que o Spring Boot apresente erros reais
                 .requestMatchers("/error")
                 .permitAll()
 
-                // Demais endpoints de autenticação
                 .requestMatchers("/api/auth/**")
                 .authenticated()
 
-                // Apenas agentes podem acessar esta área
                 .requestMatchers("/api/agente/**")
                 .hasRole("AGENTE")
 
-                // Clientes autenticados podem consultar
-                // e criar pedidos; agentes também podem acessar
+                .requestMatchers("/api/perfil/**")
+                .hasRole("CLIENTE")
+
                 .requestMatchers("/api/pedidos/**")
                 .hasAnyRole("CLIENTE", "AGENTE")
 
-                // Todas as demais requisições exigem login
                 .anyRequest().authenticated()
             )
 

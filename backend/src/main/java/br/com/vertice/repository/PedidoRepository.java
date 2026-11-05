@@ -14,13 +14,15 @@ import java.util.UUID;
 public interface PedidoRepository
         extends JpaRepository<Pedido, UUID> {
 
-    // Lista os pedidos de um cliente
     List<Pedido> findByClienteIdOrderByCriadoEmDesc(
             UUID clienteId
     );
 
-    // Verifica se já existe uma reserva aprovada
-    // para o mesmo carro em datas conflitantes
+    boolean existsByClienteIdAndStatusNotIn(
+            UUID clienteId,
+            List<String> statusFinalizados
+    );
+
     @Query("""
         SELECT CASE WHEN COUNT(p) > 0
             THEN true

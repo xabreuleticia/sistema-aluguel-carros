@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pedidos")
@@ -23,17 +24,42 @@ public class PedidoController {
 
     @GetMapping("/meus")
     public List<Pedido> listarMeusPedidos(
-        Authentication authentication
+            Authentication authentication
     ) {
         return pedidoService.listarMeusPedidos(authentication);
+    }
+
+    @GetMapping("/{id}")
+    public Pedido buscarMeuPedido(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        return pedidoService.buscarMeuPedido(id, authentication);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Pedido criar(
-        @RequestBody CriarPedidoRequest dados,
-        Authentication authentication
+            @RequestBody CriarPedidoRequest dados,
+            Authentication authentication
     ) {
         return pedidoService.criar(dados, authentication);
+    }
+
+    @PutMapping("/{id}")
+    public Pedido editar(
+            @PathVariable UUID id,
+            @RequestBody CriarPedidoRequest dados,
+            Authentication authentication
+    ) {
+        return pedidoService.editar(id, dados, authentication);
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    public Pedido cancelar(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        return pedidoService.cancelar(id, authentication);
     }
 }

@@ -1,4 +1,3 @@
-
 package br.com.vertice.repository;
 
 import br.com.vertice.model.Cliente;

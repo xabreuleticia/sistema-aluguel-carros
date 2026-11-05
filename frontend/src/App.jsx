@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import PedidoAluguel from "./pages/PedidoAluguel";
 import MeusPedidos from "./pages/MeusPedidos";
+import MeuPerfil from "./pages/MeuPerfil";
 import Agente from "./pages/Agente";
 import Carros from "./pages/Carros";
 import Sobre from "./pages/Sobre";
@@ -28,6 +29,15 @@ function App() {
         <Route
           path="/cadastro"
           element={<Cadastro />}
+        />
+
+        <Route
+          path="/perfil"
+          element={
+            <RotaProtegida perfisPermitidos={["CLIENTE"]}>
+              <MeuPerfil />
+            </RotaProtegida>
+          }
         />
 
         <Route

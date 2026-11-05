@@ -20,6 +20,21 @@ const imagens = {
   "Chevrolet|Onix": "/images/carros/chevrolet-onix.JPG",
 };
 
+const ordemAntiga = [
+  "Audi|A5 Sportback",
+  "Volvo|XC60",
+  "MINI|Cooper S",
+  "BMW|320i",
+  "Mercedes-Benz|Classe C",
+  "Porsche|Macan",
+  "Toyota|Corolla",
+  "Jeep|Compass",
+  "Honda|Civic",
+  "Range Rover|Evoque",
+  "Volkswagen|Golf GTI",
+  "Chevrolet|Onix",
+];
+
 const formatarMoeda = (valor) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -34,9 +49,31 @@ function dataLocalISO(data) {
   return `${ano}-${mes}-${dia}`;
 }
 
+function calcularDias(inicio, fim) {
+  if (!inicio || !fim || fim <= inicio) return 0;
+
+  const dataInicio = new Date(`${inicio}T12:00:00`);
+  const dataFim = new Date(`${fim}T12:00:00`);
+
+  return Math.round((dataFim - dataInicio) / 86400000);
+}
+
+async function mensagemErro(resposta, padrao) {
+  try {
+    const dados = await resposta.json();
+    return dados.detail || dados.mensagem || dados.message || padrao;
+  } catch {
+    return padrao;
+  }
+}
+
 export default function PedidoAluguel() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const pedidoId = searchParams.get("editar");
+  const modoEdicao = Boolean(pedidoId);
+  const parametroCarro = searchParams.get("carro");
 
   const [carros, setCarros] = useState([]);
   const [carroId, setCarroId] = useState("");
@@ -47,108 +84,128 @@ export default function PedidoAluguel() {
   const [devolucao, setDevolucao] = useState("");
   const [local, setLocal] = useState("");
   const [observacoes, setObservacoes] = useState("");
-  const [erro, setErro] = useState("");
 
+  const [erro, setErro] = useState("");
   const [disponibilidade, setDisponibilidade] = useState("inicial");
   const [erroDisponibilidade, setErroDisponibilidade] = useState("");
+  const [consultaConfirmada, setConsultaConfirmada] = useState("");
 
   const hoje = dataLocalISO(new Date());
 
   useEffect(() => {
     let ativo = true;
 
-    async function carregarCarros() {
-      try {
-        const resposta = await fetch("/api/automoveis");
+    async function carregarDados() {
+      setCarregando(true);
+      setErro("");
 
-        if (!resposta.ok) {
+      try {
+        const respostaCarros = await fetch("/api/automoveis", {
+          credentials: "include",
+        });
+
+        if (!respostaCarros.ok) {
           throw new Error("Não foi possível carregar os automóveis.");
         }
 
-        const dados = await resposta.json();
+        const dadosCarros = await respostaCarros.json();
+
+        if (!Array.isArray(dadosCarros)) {
+          throw new Error("A lista de automóveis é inválida.");
+        }
 
         if (!ativo) return;
 
-        setCarros(dados);
+        setCarros(dadosCarros);
 
-        const parametro = searchParams.get("carro");
+        if (modoEdicao) {
+          const respostaPedido = await fetch(
+            `/api/pedidos/${pedidoId}`,
+            { credentials: "include" }
+          );
 
-        const ordemAntiga = [
-          "Audi|A5 Sportback",
-          "Volvo|XC60",
-          "MINI|Cooper S",
-          "BMW|320i",
-          "Mercedes-Benz|Classe C",
-          "Porsche|Macan",
-          "Toyota|Corolla",
-          "Jeep|Compass",
-          "Honda|Civic",
-          "Range Rover|Evoque",
-          "Volkswagen|Golf GTI",
-          "Chevrolet|Onix",
-        ];
+          if (!respostaPedido.ok) {
+            throw new Error(
+              await mensagemErro(
+                respostaPedido,
+                "Não foi possível carregar a solicitação."
+              )
+            );
+          }
 
-        const carroPorUuid = dados.find(
-          (item) => item.id === parametro
-        );
+          const pedido = await respostaPedido.json();
 
-        const indiceAntigo = Number(parametro) - 1;
-        const chaveAntiga = ordemAntiga[indiceAntigo];
+          if (pedido.status !== "PENDENTE") {
+            throw new Error(
+              "Somente solicitações pendentes podem ser editadas."
+            );
+          }
 
-        const carroPorNumero = chaveAntiga
-          ? dados.find(
-              (item) =>
-                `${item.marca}|${item.modelo}` === chaveAntiga
-            )
-          : null;
+          if (!ativo) return;
 
-        const selecionado =
-          carroPorUuid || carroPorNumero || dados[0];
+          setCarroId(pedido.automovelId);
+          setRetirada(pedido.dataInicio?.substring(0, 10) || "");
+          setDevolucao(pedido.dataFim?.substring(0, 10) || "");
+        } else {
+          const carroPorUuid = dadosCarros.find(
+            (item) => item.id === parametroCarro
+          );
 
-        setCarroId(selecionado?.id || "");
+          const indiceAntigo = Number(parametroCarro) - 1;
+          const chaveAntiga = ordemAntiga[indiceAntigo];
+
+          const carroPorNumero = chaveAntiga
+            ? dadosCarros.find(
+                (item) =>
+                  `${item.marca}|${item.modelo}` === chaveAntiga
+              )
+            : null;
+
+          const selecionado =
+            carroPorUuid || carroPorNumero || dadosCarros[0];
+
+          setCarroId(selecionado?.id || "");
+          setRetirada("");
+          setDevolucao("");
+        }
       } catch (error) {
-        if (ativo) setErro(error.message);
+        if (ativo) {
+          setErro(error.message);
+        }
       } finally {
-        if (ativo) setCarregando(false);
+        if (ativo) {
+          setCarregando(false);
+        }
       }
     }
 
-    carregarCarros();
+    carregarDados();
 
     return () => {
       ativo = false;
     };
-  }, [searchParams]);
+  }, [modoEdicao, pedidoId, parametroCarro]);
 
   const carro = carros.find((item) => item.id === carroId);
-
-  const dias =
-    retirada && devolucao
-      ? Math.round(
-          (new Date(`${devolucao}T12:00:00`) -
-            new Date(`${retirada}T12:00:00`)) /
-            86400000
-        )
-      : 0;
-
-  const total =
-    dias > 0 && carro
-      ? dias * Number(carro.valorDiaria)
-      : 0;
+  const dias = calcularDias(retirada, devolucao);
+  const total = dias * Number(carro?.valorDiaria || 0);
 
   const datasValidas =
     Boolean(carroId && retirada && devolucao) &&
     retirada >= hoje &&
     devolucao > retirada;
 
+  const chaveConsulta = `${carroId}|${retirada}|${devolucao}`;
+
   useEffect(() => {
-    if (!datasValidas) return;
+    if (!datasValidas || carregando) return;
 
     const controlador = new AbortController();
 
     async function consultarDisponibilidade() {
       setDisponibilidade("consultando");
       setErroDisponibilidade("");
+      setConsultaConfirmada("");
 
       try {
         const parametros = new URLSearchParams({
@@ -178,6 +235,7 @@ export default function PedidoAluguel() {
         setDisponibilidade(
           dados.disponivel ? "disponivel" : "indisponivel"
         );
+        setConsultaConfirmada(chaveConsulta);
       } catch (error) {
         if (controlador.signal.aborted) return;
 
@@ -189,11 +247,27 @@ export default function PedidoAluguel() {
     consultarDisponibilidade();
 
     return () => controlador.abort();
-  }, [carroId, retirada, devolucao, datasValidas]);
+  }, [
+    carroId,
+    retirada,
+    devolucao,
+    datasValidas,
+    carregando,
+    chaveConsulta,
+  ]);
 
-  const statusDisponibilidade = !datasValidas
-    ? "inicial"
-    : disponibilidade;
+  const statusDisponibilidade =
+    !datasValidas || consultaConfirmada !== chaveConsulta
+      ? "inicial"
+      : disponibilidade;
+
+  const podeEnviar =
+    !carregando &&
+    !enviando &&
+    Boolean(carro) &&
+    datasValidas &&
+    statusDisponibilidade === "disponivel" &&
+    (!modoEdicao || Boolean(pedidoId));
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -204,8 +278,8 @@ export default function PedidoAluguel() {
       return;
     }
 
-    if (!retirada || !devolucao || !local.trim()) {
-      setErro("Preencha as datas e o local de retirada.");
+    if (!retirada || !devolucao) {
+      setErro("Preencha as datas do aluguel.");
       return;
     }
 
@@ -219,9 +293,14 @@ export default function PedidoAluguel() {
       return;
     }
 
-    if (statusDisponibilidade !== "disponivel") {
+    if (!modoEdicao && !local.trim()) {
+      setErro("Informe o local de retirada.");
+      return;
+    }
+
+    if (!podeEnviar) {
       setErro(
-        "É necessário confirmar a disponibilidade do automóvel antes de enviar a solicitação."
+        "Aguarde a confirmação da disponibilidade do automóvel."
       );
       return;
     }
@@ -235,7 +314,6 @@ export default function PedidoAluguel() {
         dataFim: devolucao,
       });
 
-      // Confere novamente antes de enviar.
       const consulta = await fetch(
         `/api/automoveis/disponibilidade?${parametros.toString()}`,
         { credentials: "include" }
@@ -243,7 +321,7 @@ export default function PedidoAluguel() {
 
       if (!consulta.ok) {
         throw new Error(
-          "Não foi possível confirmar a disponibilidade. Tente novamente."
+          "Não foi possível confirmar a disponibilidade."
         );
       }
 
@@ -258,41 +336,38 @@ export default function PedidoAluguel() {
 
       const csrf = await obterCsrf();
 
-      const resposta = await fetch("/api/pedidos", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          [csrf.headerName]: csrf.token,
-        },
-        body: JSON.stringify({
-          automovelId: carro.id,
-          dataInicio: retirada,
-          dataFim: devolucao,
-        }),
-      });
+      const resposta = await fetch(
+        modoEdicao ? `/api/pedidos/${pedidoId}` : "/api/pedidos",
+        {
+          method: modoEdicao ? "PUT" : "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            [csrf.headerName]: csrf.token,
+          },
+          body: JSON.stringify({
+            automovelId: carro.id,
+            dataInicio: retirada,
+            dataFim: devolucao,
+          }),
+        }
+      );
 
       if (!resposta.ok) {
-        let mensagem = "Não foi possível enviar o pedido.";
-
-        try {
-          const dadosErro = await resposta.json();
-          mensagem =
-            dadosErro.detail ||
-            dadosErro.mensagem ||
-            dadosErro.message ||
-            mensagem;
-        } catch {
-          // Mantém a mensagem padrão.
-        }
-
-        throw new Error(mensagem);
+        throw new Error(
+          await mensagemErro(
+            resposta,
+            modoEdicao
+              ? "Não foi possível atualizar a solicitação."
+              : "Não foi possível enviar a solicitação."
+          )
+        );
       }
 
       navigate("/pedidos", { replace: true });
     } catch (error) {
       setErro(
-        error.message || "Erro ao enviar a solicitação."
+        error.message || "Não foi possível concluir a operação."
       );
     } finally {
       setEnviando(false);
@@ -303,26 +378,23 @@ export default function PedidoAluguel() {
     return (
       <main className="pedido-page">
         <div className="pedido-container">
-          <p>Carregando automóveis disponíveis...</p>
+          <p>Carregando informações do aluguel...</p>
         </div>
       </main>
     );
   }
 
-  if (!carros.length) {
+  if (!carros.length || (modoEdicao && erro && !carroId)) {
     return (
       <main className="pedido-page">
         <div className="pedido-container">
-          <Link to="/" className="pedido-voltar">
+          <Link to="/pedidos" className="pedido-voltar">
             <ArrowLeft size={18} />
-            Voltar para a frota
+            Voltar para meus pedidos
           </Link>
 
-          <h1>Automóveis indisponíveis</h1>
-          <p>
-            {erro ||
-              "Não há automóveis disponíveis no momento."}
-          </p>
+          <h1>Não foi possível carregar a solicitação</h1>
+          <p>{erro || "Nenhum automóvel encontrado."}</p>
         </div>
       </main>
     );
@@ -331,25 +403,36 @@ export default function PedidoAluguel() {
   return (
     <main className="pedido-page">
       <div className="pedido-container">
-        <Link to="/" className="pedido-voltar">
+        <Link
+          to={modoEdicao ? "/pedidos" : "/"}
+          className="pedido-voltar"
+        >
           <ArrowLeft size={18} />
-          Voltar para a frota
+          {modoEdicao
+            ? "Voltar para meus pedidos"
+            : "Voltar para a frota"}
         </Link>
 
         <header className="pedido-heading">
           <span className="pedido-eyebrow">
-            VÉRTICE · RESERVA
+            VÉRTICE · {modoEdicao ? "EDIÇÃO" : "RESERVA"}
           </span>
 
-          <h1>Solicite seu aluguel</h1>
-          <p>Informe os detalhes da sua próxima viagem.</p>
+          <h1>
+            {modoEdicao
+              ? "Edite sua solicitação"
+              : "Solicite seu aluguel"}
+          </h1>
+
+          <p>
+            {modoEdicao
+              ? "Atualize o veículo ou as datas do seu pedido pendente."
+              : "Informe os detalhes da sua próxima viagem."}
+          </p>
         </header>
 
         <div className="pedido-layout">
-          <form
-            className="pedido-form"
-            onSubmit={handleSubmit}
-          >
+          <form className="pedido-form" onSubmit={handleSubmit}>
             <section className="pedido-form-section">
               <h2>Veículo selecionado</h2>
 
@@ -357,16 +440,14 @@ export default function PedidoAluguel() {
                 Escolha o automóvel
                 <select
                   value={carroId}
-                  onChange={(event) =>
-                    setCarroId(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setCarroId(event.target.value);
+                    setErro("");
+                  }}
                   required
                 >
                   {carros.map((item) => (
-                    <option
-                      key={item.id}
-                      value={item.id}
-                    >
+                    <option key={item.id} value={item.id}>
                       {item.marca} {item.modelo}
                     </option>
                   ))}
@@ -387,9 +468,10 @@ export default function PedidoAluguel() {
                     type="date"
                     min={hoje}
                     value={retirada}
-                    onChange={(event) =>
-                      setRetirada(event.target.value)
-                    }
+                    onChange={(event) => {
+                      setRetirada(event.target.value);
+                      setErro("");
+                    }}
                     required
                   />
                 </label>
@@ -400,13 +482,21 @@ export default function PedidoAluguel() {
                     type="date"
                     min={retirada || hoje}
                     value={devolucao}
-                    onChange={(event) =>
-                      setDevolucao(event.target.value)
-                    }
+                    onChange={(event) => {
+                      setDevolucao(event.target.value);
+                      setErro("");
+                    }}
                     required
                   />
                 </label>
               </div>
+
+              {datasValidas &&
+                statusDisponibilidade === "inicial" && (
+                  <p className="pedido-mensagem">
+                    Verificando disponibilidade...
+                  </p>
+                )}
 
               {statusDisponibilidade === "consultando" && (
                 <p className="pedido-mensagem">
@@ -444,41 +534,53 @@ export default function PedidoAluguel() {
               )}
             </section>
 
-            <section className="pedido-form-section">
-              <h2>
-                <MapPin size={20} />
-                Local de retirada
-              </h2>
+            {!modoEdicao && (
+              <>
+                <section className="pedido-form-section">
+                  <h2>
+                    <MapPin size={20} />
+                    Local de retirada
+                  </h2>
 
-              <label>
-                Endereço ou unidade
-                <input
-                  type="text"
-                  placeholder="Ex.: Unidade Vértice - Belo Horizonte"
-                  value={local}
-                  onChange={(event) =>
-                    setLocal(event.target.value)
-                  }
-                  required
-                />
-              </label>
-            </section>
+                  <label>
+                    Endereço ou unidade
+                    <input
+                      type="text"
+                      placeholder="Ex.: Unidade Vértice - Belo Horizonte"
+                      value={local}
+                      onChange={(event) =>
+                        setLocal(event.target.value)
+                      }
+                      required
+                    />
+                  </label>
+                </section>
 
-            <section className="pedido-form-section">
-              <h2>Observações</h2>
+                <section className="pedido-form-section">
+                  <h2>Observações</h2>
 
-              <label>
-                Informações adicionais (opcional)
-                <textarea
-                  rows="4"
-                  placeholder="Digite alguma preferência ou observação..."
-                  value={observacoes}
-                  onChange={(event) =>
-                    setObservacoes(event.target.value)
-                  }
-                />
-              </label>
-            </section>
+                  <label>
+                    Informações adicionais (opcional)
+                    <textarea
+                      rows="4"
+                      placeholder="Digite alguma preferência ou observação..."
+                      value={observacoes}
+                      onChange={(event) =>
+                        setObservacoes(event.target.value)
+                      }
+                    />
+                  </label>
+                </section>
+              </>
+            )}
+
+            {modoEdicao && (
+              <p className="pedido-mensagem">
+                A edição mantém sua solicitação em análise.
+                O valor será recalculado com base nas novas datas
+                e no automóvel escolhido.
+              </p>
+            )}
 
             {erro && (
               <p
@@ -492,17 +594,18 @@ export default function PedidoAluguel() {
             <button
               type="submit"
               className="pedido-submit"
-              disabled={
-                enviando ||
-                !carro ||
-                statusDisponibilidade !== "disponivel"
-              }
+              disabled={!podeEnviar}
             >
               {enviando
-                ? "Enviando solicitação..."
-                : statusDisponibilidade === "consultando"
+                ? modoEdicao
+                  ? "Salvando alterações..."
+                  : "Enviando solicitação..."
+                : datasValidas &&
+                    statusDisponibilidade !== "disponivel"
                   ? "Verificando disponibilidade..."
-                  : "Confirmar solicitação"}
+                  : modoEdicao
+                    ? "Salvar alterações"
+                    : "Confirmar solicitação"}
             </button>
           </form>
 
@@ -512,19 +615,17 @@ export default function PedidoAluguel() {
                 VEÍCULO SELECIONADO
               </span>
 
-              <img
-                src={
-                  imagens[
-                    `${carro.marca}|${carro.modelo}`
-                  ]
-                }
-                alt={`${carro.marca} ${carro.modelo}`}
-              />
+              {imagens[`${carro.marca}|${carro.modelo}`] && (
+                <img
+                  src={
+                    imagens[`${carro.marca}|${carro.modelo}`]
+                  }
+                  alt={`${carro.marca} ${carro.modelo}`}
+                />
+              )}
 
               <h2>{carro.marca}</h2>
-              <p className="pedido-modelo">
-                {carro.modelo}
-              </p>
+              <p className="pedido-modelo">{carro.modelo}</p>
 
               <div className="pedido-resumo-linha">
                 <span>Valor da diária</span>
@@ -535,21 +636,18 @@ export default function PedidoAluguel() {
 
               <div className="pedido-resumo-linha">
                 <span>Quantidade de diárias</span>
-                <strong>
-                  {dias > 0 ? dias : "—"}
-                </strong>
+                <strong>{dias > 0 ? dias : "—"}</strong>
               </div>
 
               <div className="pedido-resumo-total">
                 <span>Valor estimado</span>
-                <strong>
-                  {formatarMoeda(total)}
-                </strong>
+                <strong>{formatarMoeda(total)}</strong>
               </div>
 
               <p className="pedido-nota">
-                O valor definitivo é calculado pelo
-                sistema ao registrar sua solicitação.
+                O valor definitivo é calculado pelo sistema
+                ao {modoEdicao ? "atualizar" : "registrar"} sua
+                solicitação.
               </p>
             </aside>
           )}

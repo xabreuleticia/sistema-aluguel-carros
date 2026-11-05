@@ -25,7 +25,14 @@ public class Usuario {
     @Column(nullable = false)
     private String perfil;
 
-    @Column(name = "criado_em", insertable = false, updatable = false)
+    @Column(nullable = false)
+    private boolean ativo = true;
+
+    @Column(
+        name = "criado_em",
+        insertable = false,
+        updatable = false
+    )
     private OffsetDateTime criadoEm;
 
     public Usuario() {
@@ -65,6 +72,14 @@ public class Usuario {
 
     public void setPerfil(String perfil) {
         this.perfil = perfil;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
     }
 
     public OffsetDateTime getCriadoEm() {

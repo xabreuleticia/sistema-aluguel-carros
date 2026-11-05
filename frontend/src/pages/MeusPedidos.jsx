@@ -1,7 +1,7 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { usuarioAtual } from "../service/auth";
+import { usuarioAtual, obterCsrf } from "../service/auth";
 import "../styles/MeusPedidos.css";
 
 const formatarMoeda = (valor) =>
@@ -13,7 +13,7 @@ const formatarMoeda = (valor) =>
 const formatarData = (data) => {
   if (!data) return "—";
 
-  const partes = data.split("-");
+  const partes = data.substring(0, 10).split("-");
 
   if (partes.length === 3) {
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -48,30 +48,73 @@ const classeStatus = (status) => {
     return "recusado";
   }
 
-  if (status === "CANCELADO") {
-    return "cancelado";
-  }
-
-  if (status === "CONCLUIDO") {
-    return "concluido";
-  }
+  if (status === "CANCELADO") return "cancelado";
+  if (status === "CONCLUIDO") return "concluido";
 
   return "pendente";
+};
+
+const estilos = {
+  acoes: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "12px",
+    marginTop: "20px",
+    paddingTop: "18px",
+    borderTop: "1px solid #e4e6dd",
+  },
+  editar: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "12px 20px",
+    background: "#173f35",
+    border: "1px solid #173f35",
+    color: "#ffffff",
+    textDecoration: "none",
+    fontSize: "12px",
+    fontWeight: 600,
+    transition: "background 0.2s ease",
+  },
+  cancelar: {
+    padding: "12px 20px",
+    border: "1px solid #cda59e",
+    background: "transparent",
+    color: "#913c32",
+    fontSize: "12px",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "background 0.2s ease",
+  },
+  aviso: {
+    margin: "24px 0",
+    padding: "18px 22px",
+    fontSize: "13px",
+    lineHeight: 1.7,
+    scrollMarginTop: "110px",
+  },
 };
 
 export default function MeusPedidos() {
   const [usuario, setUsuario] = useState(null);
   const [pedidos, setPedidos] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const [erroCarregamento, setErroCarregamento] = useState("");
+  const [erroAcao, setErroAcao] = useState("");
+  const [mensagem, setMensagem] = useState("");
   const [filtro, setFiltro] = useState("TODOS");
+  const [cancelandoId, setCancelandoId] = useState(null);
+
+  const avisoRef = useRef(null);
 
   useEffect(() => {
     let ativo = true;
 
     async function carregarDados() {
       setCarregando(true);
-      setErro("");
+      setErroCarregamento("");
 
       try {
         const [dadosUsuario, resposta] = await Promise.all([
@@ -82,6 +125,12 @@ export default function MeusPedidos() {
         ]);
 
         if (!resposta.ok) {
+          if (resposta.status === 401) {
+            throw new Error(
+              "Sua sessão expirou. Faça login novamente."
+            );
+          }
+
           throw new Error(
             `Não foi possível carregar seus pedidos (${resposta.status}).`
           );
@@ -97,15 +146,13 @@ export default function MeusPedidos() {
         }
       } catch (error) {
         if (ativo) {
-          setErro(
+          setErroCarregamento(
             error.message ||
               "Não foi possível carregar seus pedidos."
           );
         }
       } finally {
-        if (ativo) {
-          setCarregando(false);
-        }
+        if (ativo) setCarregando(false);
       }
     }
 
@@ -115,6 +162,97 @@ export default function MeusPedidos() {
       ativo = false;
     };
   }, []);
+
+  useEffect(() => {
+    if ((erroAcao || mensagem) && avisoRef.current) {
+      avisoRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [erroAcao, mensagem]);
+
+  async function cancelarPedido(id) {
+    if (cancelandoId !== null) return;
+
+    const confirmado = window.confirm(
+      "Deseja realmente cancelar esta solicitação de aluguel?"
+    );
+
+    if (!confirmado) return;
+
+    setCancelandoId(id);
+    setErroAcao("");
+    setMensagem("");
+
+    try {
+      const csrf = await obterCsrf();
+
+      const resposta = await fetch(
+        `/api/pedidos/${id}/cancelar`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            [csrf.headerName]: csrf.token,
+          },
+        }
+      );
+
+      if (!resposta.ok) {
+        if (resposta.status === 409) {
+          throw new Error(
+            "Esta solicitação não está mais pendente. " +
+              "Atualize a página para verificar seu status."
+          );
+        }
+
+        if (resposta.status === 401) {
+          throw new Error(
+            "Sua sessão expirou. Faça login novamente."
+          );
+        }
+
+        if (resposta.status === 403) {
+          throw new Error(
+            "Você não possui permissão para cancelar esta solicitação."
+          );
+        }
+
+        if (resposta.status === 404) {
+          throw new Error(
+            "Esta solicitação não foi encontrada."
+          );
+        }
+
+        throw new Error(
+          "Não foi possível cancelar a solicitação. Tente novamente."
+        );
+      }
+
+      const pedidoAtualizado = await resposta.json();
+
+      setPedidos((anteriores) =>
+        anteriores.map((pedido) =>
+          pedido.id === id ? pedidoAtualizado : pedido
+        )
+      );
+
+      setMensagem(
+        "Solicitação cancelada com sucesso. " +
+          "Ela continuará disponível no seu histórico."
+      );
+    } catch (error) {
+      setErroAcao(
+        error.message === "Failed to fetch"
+          ? "Não foi possível conectar ao servidor. Verifique sua conexão."
+          : error.message ||
+              "Ocorreu um erro ao cancelar a solicitação."
+      );
+    } finally {
+      setCancelandoId(null);
+    }
+  }
 
   const aprovados = pedidos.filter((pedido) =>
     ["APROVADO", "APROVADA"].includes(pedido.status)
@@ -130,25 +268,55 @@ export default function MeusPedidos() {
     )
   ).length;
 
-  const pedidosFiltrados = pedidos.filter((pedido) => {
-    if (filtro === "TODOS") return true;
+  const cancelados = pedidos.filter(
+    (pedido) => pedido.status === "CANCELADO"
+  ).length;
 
-    if (filtro === "APROVADOS") {
-      return ["APROVADO", "APROVADA"].includes(
-        pedido.status
-      );
-    }
+  const pedidosFiltrados = pedidos
+    .filter((pedido) => {
+      if (filtro === "TODOS") return true;
 
-    if (filtro === "RECUSADOS") {
-      return [
-        "RECUSADO",
-        "REPROVADO",
-        "REJEITADO",
-      ].includes(pedido.status);
-    }
+      if (filtro === "APROVADOS") {
+        return ["APROVADO", "APROVADA"].includes(
+          pedido.status
+        );
+      }
 
-    return pedido.status === filtro;
-  });
+      if (filtro === "RECUSADOS") {
+        return [
+          "RECUSADO",
+          "REPROVADO",
+          "REJEITADO",
+        ].includes(pedido.status);
+      }
+
+      return pedido.status === filtro;
+    })
+    .sort((a, b) => {
+      if (
+        a.status === "PENDENTE" &&
+        b.status !== "PENDENTE"
+      ) {
+        return -1;
+      }
+
+      if (
+        a.status !== "PENDENTE" &&
+        b.status === "PENDENTE"
+      ) {
+        return 1;
+      }
+
+      const dataA = a.criadoEm
+        ? new Date(a.criadoEm).getTime()
+        : 0;
+
+      const dataB = b.criadoEm
+        ? new Date(b.criadoEm).getTime()
+        : 0;
+
+      return dataB - dataA;
+    });
 
   return (
     <main className="pedidos-page">
@@ -261,6 +429,34 @@ export default function MeusPedidos() {
             </div>
           </div>
 
+          {(erroAcao || mensagem) && (
+            <div
+              ref={avisoRef}
+              role={erroAcao ? "alert" : "status"}
+              style={{
+                ...estilos.aviso,
+                background: erroAcao
+                  ? "#f9eeeb"
+                  : "#eaf2e9",
+                color: erroAcao
+                  ? "#913c32"
+                  : "#24573e",
+                borderLeft: erroAcao
+                  ? "4px solid #b75548"
+                  : "4px solid #3c7655",
+              }}
+            >
+              <strong>
+                {erroAcao
+                  ? "Não foi possível concluir a operação."
+                  : "Operação concluída."}
+              </strong>
+              <p style={{ margin: "5px 0 0" }}>
+                {erroAcao || mensagem}
+              </p>
+            </div>
+          )}
+
           <div className="pedidos-lista-topo">
             <div>
               <span className="pedidos-eyebrow">
@@ -275,6 +471,7 @@ export default function MeusPedidos() {
                 ["PENDENTE", "Em análise"],
                 ["APROVADOS", "Aprovados"],
                 ["RECUSADOS", "Recusados"],
+                ["CANCELADO", `Cancelados (${cancelados})`],
               ].map(([valor, texto]) => (
                 <button
                   key={valor}
@@ -298,10 +495,10 @@ export default function MeusPedidos() {
               <h3>Preparando seu painel</h3>
               <p>Estamos carregando suas solicitações.</p>
             </div>
-          ) : erro ? (
+          ) : erroCarregamento ? (
             <div className="pedidos-estado" role="alert">
               <h3>Não foi possível carregar</h3>
-              <p>{erro}</p>
+              <p>{erroCarregamento}</p>
               <button
                 type="button"
                 className="pedidos-retry"
@@ -370,9 +567,7 @@ export default function MeusPedidos() {
                         )}
                       </span>
 
-                      <h3>
-                        Aluguel de automóvel
-                      </h3>
+                      <h3>Aluguel de automóvel</h3>
 
                       <span className="pedido-card-id">
                         Nº {pedido.id.slice(0, 8).toUpperCase()}
@@ -431,6 +626,38 @@ export default function MeusPedidos() {
                         : "—"}
                     </span>
                   </div>
+
+                  {pedido.status === "PENDENTE" && (
+                    <div style={estilos.acoes}>
+                      <Link
+                        to={`/pedido/novo?editar=${pedido.id}`}
+                        style={estilos.editar}
+                      >
+                        Editar solicitação
+                      </Link>
+
+                      <button
+                        type="button"
+                        style={{
+                          ...estilos.cancelar,
+                          opacity:
+                            cancelandoId !== null ? 0.6 : 1,
+                          cursor:
+                            cancelandoId !== null
+                              ? "not-allowed"
+                              : "pointer",
+                        }}
+                        disabled={cancelandoId !== null}
+                        onClick={() =>
+                          cancelarPedido(pedido.id)
+                        }
+                      >
+                        {cancelandoId === pedido.id
+                          ? "Cancelando..."
+                          : "Cancelar solicitação"}
+                      </button>
+                    </div>
+                  )}
                 </article>
               ))}
             </div>

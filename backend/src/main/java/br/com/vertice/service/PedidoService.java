@@ -5,7 +5,6 @@ import br.com.vertice.dto.CriarPedidoRequest;
 import br.com.vertice.model.Automovel;
 import br.com.vertice.model.Cliente;
 import br.com.vertice.model.Pedido;
-
 import br.com.vertice.repository.AutomovelRepository;
 import br.com.vertice.repository.ClienteRepository;
 import br.com.vertice.repository.PedidoRepository;
@@ -49,10 +48,9 @@ public class PedidoService {
     ) {
         Cliente cliente = buscarClienteAutenticado(authentication);
 
-        return pedidoRepository
-                .findByClienteIdOrderByCriadoEmDesc(
-                        cliente.getId()
-                );
+        return pedidoRepository.findByClienteIdOrderByCriadoEmDesc(
+                cliente.getId()
+        );
     }
 
     private Cliente buscarClienteAutenticado(
@@ -68,29 +66,52 @@ public class PedidoService {
 
         String email = authentication.getName();
 
-        UUID usuarioId = usuarioRepository
-                .findByEmail(email)
+        UUID usuarioId = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED,
                         "Usuário não encontrado."
                 ))
                 .getId();
 
-        return clienteRepository
-                .findByUsuarioId(usuarioId)
+        return clienteRepository.findByUsuarioId(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Cadastro de cliente não encontrado."
                 ));
     }
 
-    @Transactional
-    public Pedido criar(
-            CriarPedidoRequest dados,
+    private Pedido buscarPedidoDoCliente(
+            UUID pedidoId,
+            Cliente cliente
+    ) {
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Solicitação não encontrada."
+                ));
+
+        if (!pedido.getClienteId().equals(cliente.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Você não possui acesso a esta solicitação."
+            );
+        }
+
+        return pedido;
+    }
+
+    @Transactional(readOnly = true)
+    public Pedido buscarMeuPedido(
+            UUID pedidoId,
             Authentication authentication
     ) {
         Cliente cliente = buscarClienteAutenticado(authentication);
+        return buscarPedidoDoCliente(pedidoId, cliente);
+    }
 
+    private Automovel validarAutomovelEPeriodo(
+            CriarPedidoRequest dados
+    ) {
         if (dados == null
                 || dados.automovelId() == null
                 || dados.dataInicio() == null
@@ -129,24 +150,51 @@ public class PedidoService {
             );
         }
 
-        BigDecimal diaria = automovel.getValorDiaria();
+        boolean conflito = pedidoRepository.existeReservaConflitante(
+                automovel.getId(),
+                dados.dataInicio(),
+                dados.dataFim()
+        );
 
-        if (diaria == null
-                || diaria.compareTo(BigDecimal.ZERO) <= 0) {
+        if (conflito) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Este automóvel já possui uma reserva aprovada "
+                    + "para o período solicitado."
+            );
+        }
+
+        if (automovel.getValorDiaria() == null
+                || automovel.getValorDiaria()
+                        .compareTo(BigDecimal.ZERO) <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "O automóvel não possui uma diária válida."
             );
         }
 
-        long dias = ChronoUnit.DAYS.between(
-                dados.dataInicio(),
-                dados.dataFim()
-        );
+        return automovel;
+    }
 
-        BigDecimal total = diaria.multiply(
+    private BigDecimal calcularValor(
+            Automovel automovel,
+            LocalDate inicio,
+            LocalDate fim
+    ) {
+        long dias = ChronoUnit.DAYS.between(inicio, fim);
+
+        return automovel.getValorDiaria().multiply(
                 BigDecimal.valueOf(dias)
         );
+    }
+
+    @Transactional
+    public Pedido criar(
+            CriarPedidoRequest dados,
+            Authentication authentication
+    ) {
+        Cliente cliente = buscarClienteAutenticado(authentication);
+        Automovel automovel = validarAutomovelEPeriodo(dados);
 
         Pedido pedido = new Pedido();
 
@@ -154,8 +202,62 @@ public class PedidoService {
         pedido.setAutomovelId(automovel.getId());
         pedido.setDataInicio(dados.dataInicio());
         pedido.setDataFim(dados.dataFim());
-        pedido.setValorTotal(total);
+        pedido.setValorTotal(calcularValor(
+                automovel,
+                dados.dataInicio(),
+                dados.dataFim()
+        ));
         pedido.setStatus("PENDENTE");
+
+        return pedidoRepository.save(pedido);
+    }
+
+    @Transactional
+    public Pedido editar(
+            UUID pedidoId,
+            CriarPedidoRequest dados,
+            Authentication authentication
+    ) {
+        Cliente cliente = buscarClienteAutenticado(authentication);
+        Pedido pedido = buscarPedidoDoCliente(pedidoId, cliente);
+
+        if (!"PENDENTE".equals(pedido.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Somente solicitações pendentes podem ser editadas."
+            );
+        }
+
+        Automovel automovel = validarAutomovelEPeriodo(dados);
+
+        pedido.setAutomovelId(automovel.getId());
+        pedido.setDataInicio(dados.dataInicio());
+        pedido.setDataFim(dados.dataFim());
+        pedido.setValorTotal(calcularValor(
+                automovel,
+                dados.dataInicio(),
+                dados.dataFim()
+        ));
+
+        return pedidoRepository.save(pedido);
+    }
+
+    @Transactional
+    public Pedido cancelar(
+            UUID pedidoId,
+            Authentication authentication
+    ) {
+        Cliente cliente = buscarClienteAutenticado(authentication);
+        Pedido pedido = buscarPedidoDoCliente(pedidoId, cliente);
+
+        if (!"PENDENTE".equals(pedido.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Somente solicitações pendentes podem ser canceladas."
+            );
+        }
+
+        pedido.setStatus("CANCELADO");
 
         return pedidoRepository.save(pedido);
     }

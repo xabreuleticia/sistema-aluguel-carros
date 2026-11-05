@@ -4,20 +4,94 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, MapPin, CarFront } from "lucide-react";
 import "../styles/PedidoAluguel.css";
 
+
 const carros = [
-  { id: 1, marca: "Audi", modelo: "A5 Sportback", diaria: 489, imagem: "audi-a5.jpg" },
-  { id: 2, marca: "Volvo", modelo: "XC60", diaria: 559, imagem: "volvo-xc60.jpg" },
-  { id: 3, marca: "MINI", modelo: "Cooper S", diaria: 329, imagem: "mini-cooper-s.jpg" },
-  { id: 4, marca: "BMW", modelo: "320i", diaria: 529, imagem: "bmw-320i.jpg" },
-  { id: 5, marca: "Mercedes-Benz", modelo: "Classe C", diaria: 599, imagem: "mercedes-classe-c.jpg" },
-  { id: 6, marca: "Porsche", modelo: "Macan", diaria: 799, imagem: "porsche-macan.jpg" },
-  { id: 7, marca: "Toyota", modelo: "Corolla", diaria: 279, imagem: "toyota-corolla.jpg" },
-  { id: 8, marca: "Jeep", modelo: "Compass", diaria: 359, imagem: "jeep-compass.jpg" },
-  { id: 9, marca: "Honda", modelo: "Civic", diaria: 319, imagem: "honda-civic.jpg" },
-  { id: 10, marca: "Range Rover", modelo: "Evoque", diaria: 689, imagem: "range-rover-evoque.jpg" },
-  { id: 11, marca: "Volkswagen", modelo: "Golf GTI", diaria: 389, imagem: "volkswagen-golf-gti.jpg" },
-  { id: 12, marca: "Chevrolet", modelo: "Onix", diaria: 199, imagem: "chevrolet-onix.jpg" },
+  {
+    id: 1,
+    marca: "Audi",
+    modelo: "A5 Sportback",
+    diaria: 489,
+    imagem: "/images/carros/audi-a5.jpg",
+  },
+  {
+    id: 2,
+    marca: "Volvo",
+    modelo: "XC60",
+    diaria: 559,
+    imagem: "/images/carros/volvo-xc60.jpg",
+  },
+  {
+    id: 3,
+    marca: "MINI",
+    modelo: "Cooper S",
+    diaria: 329,
+    imagem: "/images/carros/mini-cooper.jpg",
+  },
+  {
+    id: 4,
+    marca: "BMW",
+    modelo: "320i",
+    diaria: 529,
+    imagem: "/images/carros/BMW3Series.jpg",
+  },
+  {
+    id: 5,
+    marca: "Mercedes-Benz",
+    modelo: "Classe C",
+    diaria: 599,
+    imagem: "/images/carros/mercedes-Benz_C-Class.jpg",
+  },
+  {
+    id: 6,
+    marca: "Porsche",
+    modelo: "Macan",
+    diaria: 799,
+    imagem: "/images/carros/porsche-macan.jpg",
+  },
+  {
+    id: 7,
+    marca: "Toyota",
+    modelo: "Corolla",
+    diaria: 279,
+    imagem: "/images/carros/toyota-corolla.jpg",
+  },
+  {
+    id: 8,
+    marca: "Jeep",
+    modelo: "Compass",
+    diaria: 359,
+    imagem: "/images/carros/jeep-compass_au.jpg",
+  },
+  {
+    id: 9,
+    marca: "Honda",
+    modelo: "Civic",
+    diaria: 319,
+    imagem: "/images/carros/honda-civic.jpg",
+  },
+  {
+    id: 10,
+    marca: "Range Rover",
+    modelo: "Evoque",
+    diaria: 689,
+    imagem: "/images/carros/range-rover-evoque.jpg",
+  },
+  {
+    id: 11,
+    marca: "Volkswagen",
+    modelo: "Golf GTI",
+    diaria: 389,
+    imagem: "/images/carros/volkswagen-golf.jpg",
+  },
+  {
+    id: 12,
+    marca: "Chevrolet",
+    modelo: "Onix",
+    diaria: 199,
+    imagem: "/images/carros/chevrolet-onix.JPG",
+  },
 ];
+
 
 function dataLocalISO(data) {
   const ano = data.getFullYear();
@@ -178,10 +252,12 @@ export default function PedidoAluguel() {
           <aside className="pedido-resumo">
             <span className="pedido-resumo-label">VEÍCULO SELECIONADO</span>
 
+            
             <img
-              src={`/images/carros/${carro.imagem}`}
+              src={carro.imagem}
               alt={`${carro.marca} ${carro.modelo}`}
             />
+
 
             <h2>{carro.marca}</h2>
             <p className="pedido-modelo">{carro.modelo}</p>

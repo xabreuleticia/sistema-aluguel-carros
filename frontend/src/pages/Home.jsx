@@ -209,7 +209,7 @@ export default function Home() {
 
         <div className="fleet-hero-image">
           <ImagemCarro
-            src="/images/carros/audi-a5.jpg"
+            src="/images/capa-inicial.png"
             alt="Audi A5 Sportback"
           />
         </div>
@@ -320,7 +320,7 @@ export default function Home() {
                     to={`/pedido/novo?carro=${carro.id}`}
                     className="car-book-button"
                   >
-                    Solicitar <ArrowUpRight size={16} />
+                    Solicitar 
                   </Link>
                 </div>
               </div>

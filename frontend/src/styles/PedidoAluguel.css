@@ -1,9 +1,13 @@
 
+/* =========================================
+   PÁGINA DE PEDIDO
+   ========================================= */
+
 .pedido-page {
   min-height: 100vh;
   padding: 40px 5% 80px;
-  background: #f5f2e9;
-  color: #092c24;
+  background: var(--vertice-cream);
+  color: var(--vertice-green-dark);
 }
 
 .pedido-container {
@@ -15,10 +19,19 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #123d32;
+  color: var(--vertice-green);
   text-decoration: none;
   font-size: 0.9rem;
 }
+
+.pedido-voltar:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* =========================================
+   CABEÇALHO DO PEDIDO
+   ========================================= */
 
 .pedido-heading {
   margin: 36px 0;
@@ -26,7 +39,7 @@
 
 .pedido-eyebrow,
 .pedido-resumo-label {
-  color: #77796f;
+  color: var(--vertice-muted);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 1.8px;
@@ -37,15 +50,22 @@
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(2.2rem, 4vw, 3.5rem);
   font-weight: 400;
+  letter-spacing: -0.025em;
 }
 
 .pedido-heading p {
-  color: #77796f;
+  color: var(--vertice-muted);
 }
+
+/* =========================================
+   LAYOUT
+   ========================================= */
 
 .pedido-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+  grid-template-columns:
+    minmax(0, 1.5fr)
+    minmax(280px, 0.8fr);
   align-items: start;
   gap: 28px;
 }
@@ -53,14 +73,20 @@
 .pedido-form,
 .pedido-resumo {
   padding: 30px;
-  border: 1px solid #deded4;
-  background: #fffefb;
+  border: 1px solid var(--vertice-border);
+  border-radius: 12px;
+  background: var(--vertice-white);
+  box-shadow: var(--vertice-shadow);
 }
+
+/* =========================================
+   FORMULÁRIO
+   ========================================= */
 
 .pedido-form-section + .pedido-form-section {
   margin-top: 30px;
   padding-top: 26px;
-  border-top: 1px solid #deded4;
+  border-top: 1px solid var(--vertice-border);
 }
 
 .pedido-form-section h2 {
@@ -89,11 +115,12 @@
 .pedido-form textarea {
   width: 100%;
   padding: 13px 14px;
-  border: 1px solid #deded4;
-  border-radius: 0;
+  border: 1px solid var(--vertice-border);
+  border-radius: 7px;
   background: #fff;
-  color: #092c24;
+  color: var(--vertice-green-dark);
   font: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .pedido-form textarea {
@@ -102,25 +129,42 @@
 
 .pedido-form input:focus,
 .pedido-form textarea:focus {
-  outline: 2px solid #123d32;
+  outline: 2px solid var(--vertice-green);
   outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(23, 63, 53, 0.1);
 }
+
+/* =========================================
+   BOTÃO DE ENVIO
+   ========================================= */
 
 .pedido-submit {
   width: 100%;
   margin-top: 28px;
   padding: 15px;
   border: 0;
-  background: #123d32;
+  border-radius: 7px;
+  background: var(--vertice-green);
   color: white;
   font: inherit;
   font-weight: 600;
-  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .pedido-submit:hover {
-  background: #092c24;
+  background: var(--vertice-green-dark);
+  transform: translateY(-2px);
 }
+
+.pedido-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================================
+   RESUMO DO ALUGUEL
+   ========================================= */
 
 .pedido-resumo {
   position: sticky;
@@ -131,13 +175,16 @@
   width: 100%;
   height: 190px;
   margin: 20px 0;
+  border-radius: 8px;
   object-fit: cover;
 }
 
 .pedido-resumo h2 {
   margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 0.9rem;
-  color: #77796f;
+  font-weight: 400;
+  color: var(--vertice-muted);
 }
 
 .pedido-modelo {
@@ -152,7 +199,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 0;
-  border-top: 1px solid #deded4;
+  border-top: 1px solid var(--vertice-border);
   font-size: 0.9rem;
 }
 
@@ -167,14 +214,19 @@
 }
 
 .pedido-nota {
-  color: #77796f;
+  color: var(--vertice-muted);
   font-size: 0.8rem;
   line-height: 1.6;
 }
 
+/* =========================================
+   MENSAGENS
+   ========================================= */
+
 .pedido-mensagem {
   margin-top: 22px;
   padding: 16px;
+  border-radius: 8px;
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -195,6 +247,10 @@
   margin: 6px 0 0;
 }
 
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+
 @media (max-width: 800px) {
   .pedido-layout {
     grid-template-columns: 1fr;
@@ -213,6 +269,234 @@
   .pedido-form,
   .pedido-resumo {
     padding: 20px;
+  }
+
+  .pedido-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================
+   VÉRTICE — RESERVA PREMIUM
+   ========================================= */
+
+.pedido-page {
+  background: #f5f2e9;
+  padding: 60px 5% 120px;
+}
+
+.pedido-container {
+  max-width: 1320px;
+}
+
+.pedido-voltar {
+  color: #697b6e;
+  font-size: 12px;
+  letter-spacing: .5px;
+}
+
+.pedido-heading {
+  margin: 65px 0 55px;
+}
+
+.pedido-eyebrow {
+  color: #8b947f;
+  font-size: 10px;
+  letter-spacing: 3px;
+}
+
+.pedido-heading h1 {
+  margin: 20px 0;
+  color: #173f35;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(48px, 5vw, 76px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -2px;
+}
+
+.pedido-heading p {
+  color: #7c8479;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.pedido-layout {
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, .85fr);
+  gap: 30px;
+}
+
+.pedido-form {
+  padding: clamp(25px, 4vw, 60px);
+  border: 1px solid #e3e3d9;
+  border-radius: 0;
+  background: #fffefb;
+  box-shadow: none;
+}
+
+.pedido-form-section + .pedido-form-section {
+  margin-top: 38px;
+  padding-top: 38px;
+  border-top: 1px solid #e6e7de;
+}
+
+.pedido-form-section h2 {
+  gap: 12px;
+  margin-bottom: 27px;
+  color: #173f35;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.pedido-form-section h2 svg {
+  color: #658a73;
+}
+
+.pedido-fields {
+  gap: 22px;
+}
+
+.pedido-form label {
+  gap: 12px;
+  color: #4d5c50;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .3px;
+}
+
+.pedido-form input,
+.pedido-form textarea {
+  min-height: 54px;
+  padding: 15px;
+  border: 1px solid #dfe2d9;
+  border-radius: 0;
+  background: #fbfbf7;
+  color: #173f35;
+  font-size: 14px;
+}
+
+.pedido-form input:focus,
+.pedido-form textarea:focus {
+  border-color: #173f35;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(23, 63, 53, .08);
+}
+
+.pedido-submit {
+  min-height: 58px;
+  margin-top: 40px;
+  border-radius: 0;
+  background: #173f35;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.pedido-submit:hover {
+  background: #2c5d4d;
+}
+
+/* RESUMO ESCURO */
+
+.pedido-resumo {
+  top: 30px;
+  padding: 35px;
+  border: 0;
+  border-radius: 0;
+  background: #173f35;
+  color: #fffefb;
+  box-shadow: 0 20px 45px rgba(16, 45, 35, .13);
+}
+
+.pedido-resumo-label {
+  color: #c8d6c9;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+}
+
+.pedido-resumo img {
+  height: 240px;
+  margin: 28px 0;
+  border-radius: 0;
+  object-fit: cover;
+}
+
+.pedido-resumo h2 {
+  color: #c7d2c7;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.pedido-modelo {
+  margin: 10px 0 35px;
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  font-weight: 400;
+}
+
+.pedido-resumo-linha {
+  padding: 20px 0;
+  border-top: 1px solid rgba(255,255,255,.2);
+  color: #d4dfd6;
+  font-size: 12px;
+}
+
+.pedido-resumo-linha strong {
+  color: #fff;
+  font-size: 13px;
+}
+
+.pedido-resumo-total {
+  margin-top: 10px;
+  padding: 26px 0;
+  border-top: 1px solid rgba(255,255,255,.35);
+  color: #fff;
+}
+
+.pedido-resumo-total strong {
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.pedido-nota {
+  margin-top: 20px;
+  color: #c1d0c3;
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+@media (max-width: 850px) {
+  .pedido-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pedido-resumo {
+    position: static;
+  }
+}
+
+@media (max-width: 500px) {
+  .pedido-page {
+    padding: 35px 5% 70px;
+  }
+
+  .pedido-heading {
+    margin: 40px 0;
+  }
+
+  .pedido-heading h1 {
+    font-size: 46px;
+  }
+
+  .pedido-form,
+  .pedido-resumo {
+    padding: 25px;
   }
 
   .pedido-fields {

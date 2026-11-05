@@ -1,48 +1,182 @@
+
 .site-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
   width: 100%;
-  padding: 20px 6%;
-  background-color: #f8f7f2;
-  box-sizing: border-box;
+  min-height: 80px;
+  padding: 15px clamp(20px, 5vw, 90px);
+  background: #fffefb;
+  border-bottom: 1px solid #e6e6dc;
+  position: relative;
+  z-index: 10;
 }
 
 .site-logo {
   color: #173f35;
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-decoration: none;
-  letter-spacing: 2px;
+  white-space: nowrap;
 }
 
 .site-nav {
   display: flex;
   align-items: center;
-  gap: 32px;
+  justify-content: center;
+  gap: clamp(15px, 2.5vw, 36px);
 }
 
 .site-nav a {
-  color: #173f35;
+  color: #334b41;
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 0.94rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.site-nav a:hover {
+  color: #648b74;
 }
 
 .header-button {
-  padding: 12px 24px;
-  border-radius: 8px;
-  background-color: #173f35;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 43px;
+  padding: 11px 25px;
+  border: 1px solid #173f35;
+  border-radius: 7px;
+  background: #173f35;
   color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
   text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+  white-space: nowrap;
 }
 
-@media (max-width: 600px) {
+.header-button:hover {
+  background: #245a4b;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
   .site-header {
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px;
+    padding: 16px 5%;
+  }
+
+  .site-logo {
+    font-size: 1.45rem;
   }
 
   .site-nav {
-    gap: 16px;
+    order: 3;
+    width: 100%;
+    justify-content: space-around;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #e6e6dc;
+  }
+
+  .site-nav a {
+    font-size: 0.85rem;
+  }
+
+  .header-button {
+    padding: 9px 17px;
+    min-height: 39px;
+  }
+}
+
+/* VÉRTICE — HEADER EDITORIAL */
+
+.site-header {
+  min-height: 88px;
+  padding: 18px clamp(25px, 6vw, 110px);
+  background: #f5f2e9;
+  border-bottom: 1px solid #dedfd4;
+}
+
+.site-logo {
+  color: #173f35;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: 4px;
+}
+
+.site-nav {
+  gap: clamp(20px, 3vw, 48px);
+}
+
+.site-nav a {
+  position: relative;
+  color: #42564a;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  padding: 8px 0;
+}
+
+.site-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 1px;
+  background: #173f35;
+  transition: width .25s ease;
+}
+
+.site-nav a:hover::after {
+  width: 100%;
+}
+
+.header-button {
+  min-height: 45px;
+  padding: 0 27px;
+  border-radius: 0;
+  background: #173f35;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.header-button:hover {
+  background: #2b5c4c;
+}
+
+@media (max-width: 700px) {
+  .site-header {
+    min-height: 75px;
+    padding: 15px 5%;
+  }
+
+  .site-logo {
+    font-size: 23px;
+    letter-spacing: 3px;
+  }
+
+  .site-nav {
+    gap: 12px;
+  }
+
+  .site-nav a {
+    font-size: 11px;
+  }
+
+  .header-button {
+    min-height: 39px;
+    padding: 0 17px;
+    font-size: 10px;
   }
 }

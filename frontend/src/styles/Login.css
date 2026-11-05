@@ -1,0 +1,450 @@
+
+/* =========================================
+   PÁGINA DE LOGIN
+   ========================================= */
+
+.login-page {
+  --login-green: #173f35;
+  --login-cream: #f5f2e9;
+  --login-text: #263b33;
+  --login-muted: #777d74;
+  --login-border: #dedfd6;
+
+  display: grid;
+  grid-template-columns: 52% 48%;
+  min-height: calc(100vh - 80px);
+  background: var(--login-cream);
+}
+
+/* =========================================
+   PAINEL VISUAL
+   ========================================= */
+
+.login-visual {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 720px;
+  padding: 48px 7%;
+  overflow: hidden;
+  color: #fff;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12, 35, 29, 0.42),
+      rgba(9, 29, 23, 0.48) 45%,
+      rgba(7, 26, 21, 0.88)
+    ),
+    url("/images/login-estrada.png")
+      center center / cover no-repeat,
+    #173f35;
+}
+
+.login-visual-top {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-monograma {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255,255,255,.7);
+  font-family: Georgia, serif;
+  font-size: 29px;
+}
+
+.login-marca {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.login-marca strong {
+  font-family: Georgia, serif;
+  font-size: 25px;
+  font-weight: 400;
+  letter-spacing: 3px;
+}
+
+.login-marca span {
+  font-size: 8px;
+  letter-spacing: 2.5px;
+}
+
+.login-visual-content {
+  position: relative;
+  z-index: 1;
+  max-width: 580px;
+}
+
+.login-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+}
+
+.login-visual-content .login-eyebrow {
+  color: #d0d9cc;
+}
+
+.login-visual-content h1 {
+  margin: 25px 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(42px, 4.3vw, 76px);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -1.5px;
+}
+
+.login-visual-content h1 em {
+  font-weight: 400;
+}
+
+.login-visual-content p {
+  font-size: 15px;
+  line-height: 1.9;
+  color: #e4e8df;
+}
+
+.login-visual-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,.4);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+
+/* =========================================
+   PAINEL DO FORMULÁRIO
+   ========================================= */
+
+.login-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 45px clamp(28px, 5vw, 95px) 28px;
+}
+
+.login-content-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  color: var(--login-muted);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+
+.login-back {
+  color: var(--login-green);
+  text-decoration: none;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 470px;
+  margin: 55px auto;
+}
+
+.login-container > .login-eyebrow {
+  color: #8a9086;
+}
+
+.login-container h2 {
+  margin: 18px 0 14px;
+  color: var(--login-green);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(35px, 3vw, 53px);
+  font-weight: 400;
+  line-height: 1.18;
+  letter-spacing: -1px;
+}
+
+.login-description {
+  margin: 0 0 30px;
+  color: var(--login-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* =========================================
+   SELEÇÃO DE TIPO DE USUÁRIO
+   ========================================= */
+
+.login-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 30px;
+  background: #e5e9e1;
+  border-radius: 7px;
+}
+
+.login-tabs button {
+  padding: 13px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #6d776e;
+  font-size: 13px;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.login-tabs button.active {
+  background: #fff;
+  color: var(--login-green);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+
+/* =========================================
+   FORMULÁRIO
+   ========================================= */
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.login-field label {
+  color: var(--login-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.login-field input {
+  width: 100%;
+  min-height: 49px;
+  padding: 0 15px;
+  border: 1px solid var(--login-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--login-text);
+  outline: none;
+  transition: .2s ease;
+}
+
+.login-field input:focus {
+  border-color: var(--login-green);
+  box-shadow: 0 0 0 3px rgba(23,63,53,.1);
+}
+
+.login-field input::placeholder {
+  color: #a1a69e;
+}
+
+.login-password {
+  position: relative;
+}
+
+.login-password input {
+  padding-right: 85px;
+}
+
+.login-show-password {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--login-green);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* =========================================
+   OPÇÕES E BOTÃO
+   ========================================= */
+
+.login-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--login-muted);
+  cursor: pointer;
+}
+
+.login-remember input {
+  accent-color: var(--login-green);
+}
+
+.login-options a,
+.login-register a {
+  color: var(--login-green);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 53px;
+  margin-top: 5px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 6px;
+  background: var(--login-green);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s, transform .2s;
+}
+
+.login-submit:hover {
+  background: #245a4b;
+  transform: translateY(-2px);
+}
+
+.login-submit span:last-child {
+  font-size: 23px;
+  font-weight: 400;
+}
+
+.login-register {
+  margin-top: 26px;
+  text-align: center;
+  color: var(--login-muted);
+  font-size: 13px;
+}
+
+/* =========================================
+   RODAPÉ
+   ========================================= */
+
+.login-content-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  color: #8b9187;
+  text-align: center;
+  font-size: 11px;
+}
+
+.login-content-footer p {
+  margin: 0;
+}
+
+.login-content-footer span {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-visual {
+    min-height: 320px;
+    padding: 30px 6%;
+  }
+
+  .login-visual-content h1 {
+    font-size: 42px;
+  }
+
+  .login-visual-footer {
+    display: none;
+  }
+
+  .login-content {
+    padding: 35px 6%;
+  }
+
+  .login-container {
+    margin: 50px auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-visual {
+    min-height: 280px;
+  }
+
+  .login-visual-content h1 {
+    font-size: 35px;
+  }
+
+  .login-visual-content p {
+    font-size: 12px;
+  }
+
+  .login-container h2 {
+    font-size: 36px;
+  }
+
+  .login-content-top > span {
+    font-size: 8px;
+  }
+}
+
+.login-error {
+  padding: 13px 16px;
+  margin: 0;
+  color: #8c302c;
+  background: #fff0ed;
+  border: 1px solid #e8c3bd;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.login-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+/* Mensagens de autenticação */
+
+.login-error {
+  padding: 13px 16px;
+  margin: 0;
+  color: #8c302c;
+  background: #fff0ed;
+  border: 1px solid #e8c3bd;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.login-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}

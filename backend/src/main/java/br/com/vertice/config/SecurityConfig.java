@@ -56,6 +56,10 @@ public class SecurityConfig {
                     "/api/automoveis"
                 ).permitAll()
 
+                // Permite que o Spring Boot apresente erros reais
+                .requestMatchers("/error")
+                .permitAll()
+
                 // Demais endpoints de autenticação
                 .requestMatchers("/api/auth/**")
                 .authenticated()

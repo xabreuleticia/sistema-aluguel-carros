@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { usuarioAtual } from "../services/auth";
+import { usuarioAtual } from "../service/auth";
 
 export default function RotaProtegida({
   children,

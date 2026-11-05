@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { usuarioAtual, sair } from "../services/auth";
+import { usuarioAtual, sair } from "../service/auth";
 import "../styles/Header.css";
 
 export default function Header() {

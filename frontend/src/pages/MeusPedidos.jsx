@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { usuarioAtual } from "../services/auth";
+import { usuarioAtual } from "../service/auth";
 import "../styles/MeusPedidos.css";
 
 const formatarMoeda = (valor) =>

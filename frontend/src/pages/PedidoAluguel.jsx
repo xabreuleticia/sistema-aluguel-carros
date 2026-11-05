@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
-import { obterCsrf } from "../services/auth";
+import { obterCsrf } from "../service/auth";
 import "../styles/PedidoAluguel.css";
 
 const imagens = {

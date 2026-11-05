@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { cadastrarCliente } from "../services/auth";
+import { cadastrarCliente } from "../service/auth";
 import "../styles/Login.css";
 import "../styles/Cadastro.css";
 

@@ -5,7 +5,7 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
-import { entrar } from "../services/auth";
+import { entrar } from "../service/auth";
 import "../styles/Login.css";
 
 export default function Login() {

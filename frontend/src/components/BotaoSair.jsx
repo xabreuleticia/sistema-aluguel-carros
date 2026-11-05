@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { sair } from "../services/auth";
+import { sair } from "../service/auth";
 
 export default function BotaoSair() {
   const navigate = useNavigate();

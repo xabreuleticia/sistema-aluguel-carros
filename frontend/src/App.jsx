@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import PedidoAluguel from "./pages/PedidoAluguel";
 import MeusPedidos from "./pages/MeusPedidos";
+import Agente from "./pages/Agente";
 
 import "./App.css";
 
@@ -49,7 +50,7 @@ function App() {
           path="/agente"
           element={
             <RotaProtegida perfisPermitidos={["AGENTE"]}>
-              <h1>Painel do agente</h1>
+              <Agente />
             </RotaProtegida>
           }
         />

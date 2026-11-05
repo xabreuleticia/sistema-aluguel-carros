@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import PedidoAluguel from "./pages/PedidoAluguel";
+import MeusPedidos from "./pages/MeusPedidos";
 
 import "./App.css";
 
@@ -30,7 +31,7 @@ function App() {
           path="/pedidos"
           element={
             <RotaProtegida perfisPermitidos={["CLIENTE"]}>
-              <h1>Meus pedidos</h1>
+              <MeusPedidos />
             </RotaProtegida>
           }
         />

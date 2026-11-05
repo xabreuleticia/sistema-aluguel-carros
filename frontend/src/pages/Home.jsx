@@ -1,12 +1,15 @@
 
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+
 import {
-  ArrowUpRight,
   ShieldCheck,
   CarFront,
   CalendarCheck,
-  ArrowRight,
+  CheckCircle2,
+  X,
 } from "lucide-react";
+
 import "../styles/Home.css";
 
 const destaques = [
@@ -52,8 +55,100 @@ const diferenciais = [
 ];
 
 export default function Home() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [mensagem, setMensagem] = useState(
+    location.state?.mensagemConta || ""
+  );
+
+  useEffect(() => {
+    const mensagemRecebida = location.state?.mensagemConta;
+
+    if (mensagemRecebida) {
+      setMensagem(mensagemRecebida);
+
+      navigate(
+        {
+          pathname: location.pathname,
+          search: location.search,
+        },
+        {
+          replace: true,
+          state: null,
+        }
+      );
+    }
+  }, [
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+  ]);
+
   return (
     <main className="fleet-page">
+      {/* MENSAGEM DE CONFIRMAÇÃO */}
+
+      {mensagem && (
+        <div
+          role="status"
+          className="home-mensagem-conta"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "18px",
+            padding: "18px 6%",
+            background: "#e8f0e6",
+            color: "#173f35",
+            borderBottom: "1px solid #cbdcc9",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <CheckCircle2
+              size={22}
+              strokeWidth={1.8}
+            />
+
+            <span
+              style={{
+                fontSize: "14px",
+                fontWeight: 500,
+              }}
+            >
+              {mensagem}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMensagem("")}
+            aria-label="Fechar mensagem"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "5px",
+              border: "none",
+              background: "transparent",
+              color: "#173f35",
+              cursor: "pointer",
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+      )}
+
+      {/* BANNER PRINCIPAL */}
+
       <section className="fleet-hero">
         <div className="fleet-hero-content">
           <span className="eyebrow">
@@ -85,6 +180,8 @@ export default function Home() {
         </div>
       </section>
 
+      {/* INTRODUÇÃO */}
+
       <section className="home-introducao">
         <span className="eyebrow">
           BEM-VINDO À VÉRTICE
@@ -106,9 +203,10 @@ export default function Home() {
 
         <Link to="/sobre" className="home-link-texto">
           Conheça a VÉRTICE
-
         </Link>
       </section>
+
+      {/* DIFERENCIAIS */}
 
       <section className="home-diferenciais">
         <div className="home-secao-titulo">
@@ -136,6 +234,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* CARROS EM DESTAQUE */}
 
       <section className="home-destaques">
         <div className="home-destaques-cabecalho">
@@ -186,6 +286,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* CHAMADA FINAL */}
 
       <section className="home-cta">
         <span className="eyebrow">

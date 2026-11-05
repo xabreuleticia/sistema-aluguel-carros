@@ -11,6 +11,7 @@ import PedidoAluguel from "./pages/PedidoAluguel";
 import MeusPedidos from "./pages/MeusPedidos";
 import Agente from "./pages/Agente";
 import Carros from "./pages/Carros";
+import Sobre from "./pages/Sobre";
 
 import "./App.css";
 
@@ -48,6 +49,8 @@ function App() {
         />
 
         <Route path="/carros" element={<Carros />} />
+
+        <Route path="/sobre" element={<Sobre />} />
 
         <Route
           path="/agente"

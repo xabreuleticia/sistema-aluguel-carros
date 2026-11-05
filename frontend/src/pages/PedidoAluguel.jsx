@@ -49,6 +49,9 @@ export default function PedidoAluguel() {
   const [observacoes, setObservacoes] = useState("");
   const [erro, setErro] = useState("");
 
+  const [disponibilidade, setDisponibilidade] = useState("inicial");
+  const [erroDisponibilidade, setErroDisponibilidade] = useState("");
+
   const hoje = dataLocalISO(new Date());
 
   useEffect(() => {
@@ -70,7 +73,6 @@ export default function PedidoAluguel() {
 
         const parametro = searchParams.get("carro");
 
-        // Compatibilidade com os links antigos que usam IDs de 1 a 12.
         const ordemAntiga = [
           "Audi|A5 Sportback",
           "Volvo|XC60",
@@ -105,13 +107,9 @@ export default function PedidoAluguel() {
 
         setCarroId(selecionado?.id || "");
       } catch (error) {
-        if (ativo) {
-          setErro(error.message);
-        }
+        if (ativo) setErro(error.message);
       } finally {
-        if (ativo) {
-          setCarregando(false);
-        }
+        if (ativo) setCarregando(false);
       }
     }
 
@@ -122,9 +120,7 @@ export default function PedidoAluguel() {
     };
   }, [searchParams]);
 
-  const carro = carros.find(
-    (item) => item.id === carroId
-  );
+  const carro = carros.find((item) => item.id === carroId);
 
   const dias =
     retirada && devolucao
@@ -139,6 +135,65 @@ export default function PedidoAluguel() {
     dias > 0 && carro
       ? dias * Number(carro.valorDiaria)
       : 0;
+
+  const datasValidas =
+    Boolean(carroId && retirada && devolucao) &&
+    retirada >= hoje &&
+    devolucao > retirada;
+
+  useEffect(() => {
+    if (!datasValidas) return;
+
+    const controlador = new AbortController();
+
+    async function consultarDisponibilidade() {
+      setDisponibilidade("consultando");
+      setErroDisponibilidade("");
+
+      try {
+        const parametros = new URLSearchParams({
+          automovelId: carroId,
+          dataInicio: retirada,
+          dataFim: devolucao,
+        });
+
+        const resposta = await fetch(
+          `/api/automoveis/disponibilidade?${parametros.toString()}`,
+          {
+            credentials: "include",
+            signal: controlador.signal,
+          }
+        );
+
+        if (!resposta.ok) {
+          throw new Error(
+            "Não foi possível verificar a disponibilidade."
+          );
+        }
+
+        const dados = await resposta.json();
+
+        if (controlador.signal.aborted) return;
+
+        setDisponibilidade(
+          dados.disponivel ? "disponivel" : "indisponivel"
+        );
+      } catch (error) {
+        if (controlador.signal.aborted) return;
+
+        setDisponibilidade("erro");
+        setErroDisponibilidade(error.message);
+      }
+    }
+
+    consultarDisponibilidade();
+
+    return () => controlador.abort();
+  }, [carroId, retirada, devolucao, datasValidas]);
+
+  const statusDisponibilidade = !datasValidas
+    ? "inicial"
+    : disponibilidade;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -164,9 +219,43 @@ export default function PedidoAluguel() {
       return;
     }
 
+    if (statusDisponibilidade !== "disponivel") {
+      setErro(
+        "É necessário confirmar a disponibilidade do automóvel antes de enviar a solicitação."
+      );
+      return;
+    }
+
     setEnviando(true);
 
     try {
+      const parametros = new URLSearchParams({
+        automovelId: carro.id,
+        dataInicio: retirada,
+        dataFim: devolucao,
+      });
+
+      // Confere novamente antes de enviar.
+      const consulta = await fetch(
+        `/api/automoveis/disponibilidade?${parametros.toString()}`,
+        { credentials: "include" }
+      );
+
+      if (!consulta.ok) {
+        throw new Error(
+          "Não foi possível confirmar a disponibilidade. Tente novamente."
+        );
+      }
+
+      const resultado = await consulta.json();
+
+      if (!resultado.disponivel) {
+        setDisponibilidade("indisponivel");
+        throw new Error(
+          "Este automóvel já está reservado para o período selecionado."
+        );
+      }
+
       const csrf = await obterCsrf();
 
       const resposta = await fetch("/api/pedidos", {
@@ -188,10 +277,10 @@ export default function PedidoAluguel() {
 
         try {
           const dadosErro = await resposta.json();
-
           mensagem =
             dadosErro.detail ||
             dadosErro.mensagem ||
+            dadosErro.message ||
             mensagem;
         } catch {
           // Mantém a mensagem padrão.
@@ -318,6 +407,41 @@ export default function PedidoAluguel() {
                   />
                 </label>
               </div>
+
+              {statusDisponibilidade === "consultando" && (
+                <p className="pedido-mensagem">
+                  Verificando disponibilidade...
+                </p>
+              )}
+
+              {statusDisponibilidade === "disponivel" && (
+                <p
+                  className="pedido-mensagem"
+                  role="status"
+                  style={{ color: "#24573e" }}
+                >
+                  Automóvel disponível para o período selecionado.
+                </p>
+              )}
+
+              {statusDisponibilidade === "indisponivel" && (
+                <p
+                  className="pedido-mensagem pedido-erro"
+                  role="alert"
+                >
+                  Este automóvel já possui uma reserva aprovada
+                  nesse período. Escolha outras datas ou outro veículo.
+                </p>
+              )}
+
+              {statusDisponibilidade === "erro" && (
+                <p
+                  className="pedido-mensagem pedido-erro"
+                  role="alert"
+                >
+                  {erroDisponibilidade}
+                </p>
+              )}
             </section>
 
             <section className="pedido-form-section">
@@ -357,7 +481,10 @@ export default function PedidoAluguel() {
             </section>
 
             {erro && (
-              <p className="pedido-mensagem pedido-erro" role="alert">
+              <p
+                className="pedido-mensagem pedido-erro"
+                role="alert"
+              >
                 {erro}
               </p>
             )}
@@ -365,11 +492,17 @@ export default function PedidoAluguel() {
             <button
               type="submit"
               className="pedido-submit"
-              disabled={enviando || !carro}
+              disabled={
+                enviando ||
+                !carro ||
+                statusDisponibilidade !== "disponivel"
+              }
             >
               {enviando
                 ? "Enviando solicitação..."
-                : "Confirmar solicitação"}
+                : statusDisponibilidade === "consultando"
+                  ? "Verificando disponibilidade..."
+                  : "Confirmar solicitação"}
             </button>
           </form>
 

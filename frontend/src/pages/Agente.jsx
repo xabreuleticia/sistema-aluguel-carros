@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../styles/Agente.css";
 
 const formatarMoeda = (valor) =>
@@ -21,6 +21,76 @@ const statusTexto = {
   RECUSADO: "Recusado",
 };
 
+async function obterMensagemErro(resposta, acao) {
+  let dados = {};
+
+  try {
+    dados = await resposta.json();
+  } catch {
+    // A resposta pode não conter JSON.
+  }
+
+  const mensagemServidor = [
+    dados.detail,
+    dados.message,
+    dados.reason,
+  ]
+    .filter((valor) => typeof valor === "string")
+    .join(" ");
+
+  const mensagemNormalizada = mensagemServidor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (resposta.status === 409) {
+    if (
+      mensagemNormalizada.includes("reserva") ||
+      mensagemNormalizada.includes("periodo") ||
+      mensagemNormalizada.includes("disponivel") ||
+      mensagemNormalizada.includes("conflito")
+    ) {
+      return (
+        "Não foi possível aprovar a solicitação. " +
+        "Este automóvel já possui uma reserva aprovada " +
+        "para o período selecionado."
+      );
+    }
+
+    if (mensagemNormalizada.includes("analisado")) {
+      return (
+        "Esta solicitação já foi analisada. " +
+        "Atualize a lista para visualizar seu status atual."
+      );
+    }
+
+    return acao === "aprovar"
+      ? "Não foi possível aprovar o pedido. Verifique se o automóvel está disponível para as datas selecionadas."
+      : "Não foi possível recusar o pedido. Atualize a lista e tente novamente.";
+  }
+
+  if (resposta.status === 401) {
+    return "Sua sessão expirou. Faça login novamente.";
+  }
+
+  if (resposta.status === 403) {
+    return "Você não possui permissão para realizar esta ação.";
+  }
+
+  if (resposta.status === 404) {
+    return "Esta solicitação não foi encontrada. Atualize a lista.";
+  }
+
+  if (resposta.status >= 500) {
+    return "O servidor apresentou um problema. Tente novamente mais tarde.";
+  }
+
+  return (
+    mensagemServidor ||
+    "Não foi possível atualizar o pedido. Tente novamente."
+  );
+}
+
 export default function Agente() {
   const [pedidos, setPedidos] = useState([]);
   const [automoveis, setAutomoveis] = useState([]);
@@ -30,6 +100,17 @@ export default function Agente() {
   const [processando, setProcessando] = useState(null);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const alertaErroRef = useRef(null);
+  
+  useEffect(() => {
+    if (erro && alertaErroRef.current) {
+      alertaErroRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [erro]);
+
 
   async function carregarDados() {
     setCarregando(true);
@@ -50,8 +131,8 @@ export default function Agente() {
           resPedidos.status === 403
             ? "Você não possui permissão de agente."
             : resPedidos.status === 401
-            ? "Faça login para acessar o painel."
-            : "Não foi possível carregar os pedidos."
+              ? "Faça login para acessar o painel."
+              : "Não foi possível carregar os pedidos."
         );
       }
 
@@ -62,7 +143,11 @@ export default function Agente() {
         setAutomoveis(await resAutomoveis.json());
       }
     } catch (error) {
-      setErro(error.message);
+      setErro(
+        error.message === "Failed to fetch"
+          ? "Não foi possível conectar ao servidor. Verifique se o backend está funcionando."
+          : error.message
+      );
     } finally {
       setCarregando(false);
     }
@@ -112,19 +197,12 @@ export default function Agente() {
       );
 
       if (!resposta.ok) {
-        if (resposta.status === 409) {
-          throw new Error(
-            "Este pedido já foi analisado. Atualize a lista."
-          );
-        }
+        const mensagemErro = await obterMensagemErro(
+          resposta,
+          acao
+        );
 
-        if (resposta.status === 403) {
-          throw new Error(
-            "Você não tem permissão para realizar esta ação."
-          );
-        }
-
-        throw new Error("Não foi possível atualizar o pedido.");
+        throw new Error(mensagemErro);
       }
 
       const pedidoAtualizado = await resposta.json();
@@ -141,7 +219,11 @@ export default function Agente() {
           : "Solicitação recusada com sucesso."
       );
     } catch (error) {
-      setErro(error.message);
+      setErro(
+        error.message === "Failed to fetch"
+          ? "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente."
+          : error.message
+      );
     } finally {
       setProcessando(null);
     }
@@ -158,31 +240,53 @@ export default function Agente() {
   const quantidadeRecusados = pedidos.filter(
     (pedido) => pedido.status === "RECUSADO"
   ).length;
+  
+  const pedidosFiltrados = pedidos
+    .filter((pedido) => {
+      const correspondeStatus =
+        filtro === "TODOS" || pedido.status === filtro;
 
-  const pedidosFiltrados = pedidos.filter((pedido) => {
-    const correspondeStatus =
-      filtro === "TODOS" || pedido.status === filtro;
+      const automovel = automoveis.find(
+        (carro) => carro.id === pedido.automovelId
+      );
 
-    const automovel = automoveis.find(
-      (carro) => carro.id === pedido.automovelId
-    );
+      const textoBusca = [
+        pedido.id,
+        pedido.clienteId,
+        automovel?.marca,
+        automovel?.modelo,
+        automovel?.placa,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-    const textoBusca = [
-      pedido.id,
-      pedido.clienteId,
-      automovel?.marca,
-      automovel?.modelo,
-      automovel?.placa,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+      return (
+        correspondeStatus &&
+        textoBusca.includes(busca.toLowerCase().trim())
+      );
+    })
+    .sort((a, b) => {
+      // Pedidos pendentes sempre aparecem primeiro.
+      if (a.status === "PENDENTE" && b.status !== "PENDENTE") {
+        return -1;
+      }
 
-    return (
-      correspondeStatus &&
-      textoBusca.includes(busca.toLowerCase().trim())
-    );
-  });
+      if (a.status !== "PENDENTE" && b.status === "PENDENTE") {
+        return 1;
+      }
+
+      // Dentro de cada grupo, os mais recentes aparecem primeiro.
+      const dataA = a.criadoEm
+        ? new Date(a.criadoEm).getTime()
+        : 0;
+
+      const dataB = b.criadoEm
+        ? new Date(b.criadoEm).getTime()
+        : 0;
+
+      return dataB - dataA;
+    });
 
   function nomeAutomovel(id) {
     const carro = automoveis.find((item) => item.id === id);
@@ -250,7 +354,9 @@ export default function Agente() {
               <span className="agente-etiqueta">
                 CENTRAL DE SOLICITAÇÕES
               </span>
+
               <h2>Pedidos de aluguel</h2>
+
               <p>
                 Consulte as solicitações e registre sua decisão.
               </p>
@@ -279,14 +385,25 @@ export default function Agente() {
           </div>
 
           {erro && (
-            <div className="agente-alerta agente-alerta-erro" role="alert">
-              {erro}
+            <div
+              ref={alertaErroRef}
+              className="agente-alerta agente-alerta-erro"
+              role="alert"
+              style={{ scrollMarginTop: "110px" }}
+            >
+              <strong>Não foi possível concluir a operação.</strong>
+              <span>{erro}</span>
             </div>
           )}
 
+
           {mensagem && (
-            <div className="agente-alerta agente-alerta-sucesso" role="status">
-              {mensagem}
+            <div
+              className="agente-alerta agente-alerta-sucesso"
+              role="status"
+            >
+              <strong>Operação concluída.</strong>
+              <span>{mensagem}</span>
             </div>
           )}
 
@@ -305,7 +422,10 @@ export default function Agente() {
           ) : (
             <div className="agente-pedidos">
               {pedidosFiltrados.map((pedido) => (
-                <article className="agente-pedido" key={pedido.id}>
+                <article
+                  className="agente-pedido"
+                  key={pedido.id}
+                >
                   <div className="agente-pedido-cabecalho">
                     <div>
                       <span className="agente-pedido-label">
@@ -317,14 +437,16 @@ export default function Agente() {
                       </h3>
 
                       <small>
-                        Pedido #{pedido.id.slice(0, 8).toUpperCase()}
+                        Pedido #
+                        {pedido.id.slice(0, 8).toUpperCase()}
                       </small>
                     </div>
 
                     <span
                       className={`agente-status agente-status-${pedido.status.toLowerCase()}`}
                     >
-                      {statusTexto[pedido.status] || pedido.status}
+                      {statusTexto[pedido.status] ||
+                        pedido.status}
                     </span>
                   </div>
 
@@ -373,7 +495,10 @@ export default function Agente() {
                           className="agente-botao-recusar"
                           disabled={processando !== null}
                           onClick={() =>
-                            decidirPedido(pedido.id, "recusar")
+                            decidirPedido(
+                              pedido.id,
+                              "recusar"
+                            )
                           }
                         >
                           Recusar
@@ -383,7 +508,10 @@ export default function Agente() {
                           className="agente-botao-aprovar"
                           disabled={processando !== null}
                           onClick={() =>
-                            decidirPedido(pedido.id, "aprovar")
+                            decidirPedido(
+                              pedido.id,
+                              "aprovar"
+                            )
                           }
                         >
                           {processando === pedido.id

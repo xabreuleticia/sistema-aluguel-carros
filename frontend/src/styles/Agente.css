@@ -410,3 +410,41 @@
     width: 100%;
   }
 }
+
+/* =========================================
+   ALERTAS DO PAINEL DO AGENTE
+   ========================================= */
+
+.agente-alerta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 24px 0;
+  padding: 18px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.agente-alerta strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.agente-alerta span {
+  display: block;
+  font-size: 13px;
+}
+
+.agente-alerta-erro {
+  background: #f9eeeb;
+  color: #913c32;
+  border-left: 4px solid #b75548;
+}
+
+.agente-alerta-sucesso {
+  background: #eaf2e9;
+  color: #24573e;
+  border-left: 4px solid #3c7655;
+}

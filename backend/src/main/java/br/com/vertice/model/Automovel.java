@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -38,6 +39,14 @@ public class Automovel {
 
     @Column(nullable = false)
     private boolean disponivel = true;
+
+    @Column(
+        name = "valor_diaria",
+        nullable = false,
+        precision = 10,
+        scale = 2
+    )
+    private BigDecimal valorDiaria;
 
     public Automovel() {
     }
@@ -100,5 +109,13 @@ public class Automovel {
 
     public void setDisponivel(boolean disponivel) {
         this.disponivel = disponivel;
+    }
+
+    public BigDecimal getValorDiaria() {
+        return valorDiaria;
+    }
+
+    public void setValorDiaria(BigDecimal valorDiaria) {
+        this.valorDiaria = valorDiaria;
     }
 }

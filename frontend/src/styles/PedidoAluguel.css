@@ -1,17 +1,17 @@
 
-/* =========================================
-   PÁGINA DE PEDIDO
-   ========================================= */
+/* =========================================================
+   1. PÁGINA DE PEDIDO
+   ========================================================= */
 
 .pedido-page {
   min-height: 100vh;
-  padding: 40px 5% 80px;
-  background: var(--vertice-cream);
-  color: var(--vertice-green-dark);
+  padding: 60px 5% 120px;
+  background: #f5f2e9;
+  color: #173f35;
 }
 
 .pedido-container {
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
 }
 
@@ -19,9 +19,10 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--vertice-green);
+  color: #697b6e;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 12px;
+  letter-spacing: 0.5px;
 }
 
 .pedido-voltar:hover {
@@ -29,279 +30,23 @@
   text-underline-offset: 4px;
 }
 
-/* =========================================
-   CABEÇALHO DO PEDIDO
-   ========================================= */
-
-.pedido-heading {
-  margin: 36px 0;
-}
-
-.pedido-eyebrow,
-.pedido-resumo-label {
-  color: var(--vertice-muted);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 1.8px;
-}
-
-.pedido-heading h1 {
-  margin: 12px 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2.2rem, 4vw, 3.5rem);
-  font-weight: 400;
-  letter-spacing: -0.025em;
-}
-
-.pedido-heading p {
-  color: var(--vertice-muted);
-}
-
-/* =========================================
-   LAYOUT
-   ========================================= */
-
-.pedido-layout {
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1.5fr)
-    minmax(280px, 0.8fr);
-  align-items: start;
-  gap: 28px;
-}
-
-.pedido-form,
-.pedido-resumo {
-  padding: 30px;
-  border: 1px solid var(--vertice-border);
-  border-radius: 12px;
-  background: var(--vertice-white);
-  box-shadow: var(--vertice-shadow);
-}
-
-/* =========================================
-   FORMULÁRIO
-   ========================================= */
-
-.pedido-form-section + .pedido-form-section {
-  margin-top: 30px;
-  padding-top: 26px;
-  border-top: 1px solid var(--vertice-border);
-}
-
-.pedido-form-section h2 {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 20px;
-  font-size: 1.15rem;
-}
-
-.pedido-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.pedido-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  color: #55584f;
-  font-size: 0.9rem;
-}
-
-.pedido-form input,
-.pedido-form textarea {
-  width: 100%;
-  padding: 13px 14px;
-  border: 1px solid var(--vertice-border);
-  border-radius: 7px;
-  background: #fff;
-  color: var(--vertice-green-dark);
-  font: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.pedido-form textarea {
-  resize: vertical;
-}
-
-.pedido-form input:focus,
-.pedido-form textarea:focus {
-  outline: 2px solid var(--vertice-green);
-  outline-offset: 1px;
-  box-shadow: 0 0 0 3px rgba(23, 63, 53, 0.1);
-}
-
-/* =========================================
-   BOTÃO DE ENVIO
-   ========================================= */
-
-.pedido-submit {
-  width: 100%;
-  margin-top: 28px;
-  padding: 15px;
-  border: 0;
-  border-radius: 7px;
-  background: var(--vertice-green);
-  color: white;
-  font: inherit;
-  font-weight: 600;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.pedido-submit:hover {
-  background: var(--vertice-green-dark);
-  transform: translateY(-2px);
-}
-
-.pedido-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* =========================================
-   RESUMO DO ALUGUEL
-   ========================================= */
-
-.pedido-resumo {
-  position: sticky;
-  top: 100px;
-}
-
-.pedido-resumo img {
-  width: 100%;
-  height: 190px;
-  margin: 20px 0;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.pedido-resumo h2 {
-  margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: var(--vertice-muted);
-}
-
-.pedido-modelo {
-  margin: 5px 0 24px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.7rem;
-}
-
-.pedido-resumo-linha,
-.pedido-resumo-total {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 0;
-  border-top: 1px solid var(--vertice-border);
-  font-size: 0.9rem;
-}
-
-.pedido-resumo-total {
-  margin-top: 8px;
-  align-items: center;
-  font-size: 1rem;
-}
-
-.pedido-resumo-total strong {
-  font-size: 1.35rem;
-}
-
-.pedido-nota {
-  color: var(--vertice-muted);
-  font-size: 0.8rem;
-  line-height: 1.6;
-}
-
-/* =========================================
-   MENSAGENS
-   ========================================= */
-
-.pedido-mensagem {
-  margin-top: 22px;
-  padding: 16px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.pedido-erro {
-  border: 1px solid #d9a4a4;
-  background: #fff0f0;
-  color: #8c2929;
-}
-
-.pedido-sucesso {
-  border: 1px solid #a7c6ad;
-  background: #eff8f0;
-  color: #245c32;
-}
-
-.pedido-sucesso p {
-  margin: 6px 0 0;
-}
-
-/* =========================================
-   RESPONSIVIDADE
-   ========================================= */
-
-@media (max-width: 800px) {
-  .pedido-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .pedido-resumo {
-    position: static;
-  }
-}
-
-@media (max-width: 500px) {
-  .pedido-page {
-    padding: 28px 4% 50px;
-  }
-
-  .pedido-form,
-  .pedido-resumo {
-    padding: 20px;
-  }
-
-  .pedido-fields {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* =========================================
-   VÉRTICE — RESERVA PREMIUM
-   ========================================= */
-
-.pedido-page {
-  background: #f5f2e9;
-  padding: 60px 5% 120px;
-}
-
-.pedido-container {
-  max-width: 1320px;
-}
-
-.pedido-voltar {
-  color: #697b6e;
-  font-size: 12px;
-  letter-spacing: .5px;
-}
+/* =========================================================
+   2. CABEÇALHO DO PEDIDO
+   ========================================================= */
 
 .pedido-heading {
   margin: 65px 0 55px;
 }
 
+.pedido-eyebrow,
+.pedido-resumo-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+}
+
 .pedido-eyebrow {
   color: #8b947f;
-  font-size: 10px;
   letter-spacing: 3px;
 }
 
@@ -321,12 +66,25 @@
   line-height: 1.7;
 }
 
+/* =========================================================
+   3. LAYOUT
+   ========================================================= */
+
 .pedido-layout {
-  grid-template-columns: minmax(0, 1.4fr) minmax(300px, .85fr);
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.4fr)
+    minmax(300px, 0.85fr);
+  align-items: start;
   gap: 30px;
 }
 
+/* =========================================================
+   4. FORMULÁRIO
+   ========================================================= */
+
 .pedido-form {
+  min-width: 0;
   padding: clamp(25px, 4vw, 60px);
   border: 1px solid #e3e3d9;
   border-radius: 0;
@@ -341,8 +99,10 @@
 }
 
 .pedido-form-section h2 {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 27px;
+  margin: 0 0 27px;
   color: #173f35;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 25px;
@@ -350,73 +110,154 @@
 }
 
 .pedido-form-section h2 svg {
+  flex-shrink: 0;
   color: #658a73;
 }
 
 .pedido-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
 }
 
 .pedido-form label {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   color: #4d5c50;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: .3px;
+  letter-spacing: 0.3px;
 }
 
+/* =========================================================
+   5. INPUTS, SELECT E TEXTAREA
+   ========================================================= */
+
 .pedido-form input,
+.pedido-form select,
 .pedido-form textarea {
+  width: 100%;
+  min-width: 0;
   min-height: 54px;
   padding: 15px;
   border: 1px solid #dfe2d9;
   border-radius: 0;
   background: #fbfbf7;
   color: #173f35;
+  font-family: inherit;
   font-size: 14px;
+  font-weight: 400;
+  letter-spacing: normal;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pedido-form input::placeholder,
+.pedido-form textarea::placeholder {
+  color: #969f94;
+}
+
+.pedido-form select {
+  cursor: pointer;
+  padding-right: 35px;
+}
+
+.pedido-form select option {
+  background: #fffefb;
+  color: #173f35;
+}
+
+.pedido-form textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
 }
 
 .pedido-form input:focus,
+.pedido-form select:focus,
 .pedido-form textarea:focus {
   border-color: #173f35;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(23, 63, 53, .08);
+  box-shadow: 0 0 0 3px rgba(23, 63, 53, 0.08);
 }
 
+.pedido-form input:disabled,
+.pedido-form select:disabled,
+.pedido-form textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   6. BOTÃO DE ENVIO
+   ========================================================= */
+
 .pedido-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   min-height: 58px;
   margin-top: 40px;
+  padding: 15px 22px;
+  border: 0;
   border-radius: 0;
   background: #173f35;
+  color: #ffffff;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
-.pedido-submit:hover {
+.pedido-submit:hover:not(:disabled) {
   background: #2c5d4d;
+  transform: translateY(-2px);
 }
 
-/* RESUMO ESCURO */
+.pedido-submit:focus-visible {
+  outline: 2px solid #173f35;
+  outline-offset: 4px;
+}
+
+.pedido-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================================================
+   7. RESUMO DO ALUGUEL
+   ========================================================= */
 
 .pedido-resumo {
+  position: sticky;
   top: 30px;
+  min-width: 0;
   padding: 35px;
   border: 0;
   border-radius: 0;
   background: #173f35;
   color: #fffefb;
-  box-shadow: 0 20px 45px rgba(16, 45, 35, .13);
+  box-shadow: 0 20px 45px rgba(16, 45, 35, 0.13);
 }
 
 .pedido-resumo-label {
+  display: block;
   color: #c8d6c9;
-  font-size: 10px;
   letter-spacing: 2.5px;
 }
 
 .pedido-resumo img {
+  display: block;
+  width: 100%;
   height: 240px;
   margin: 28px 0;
   border-radius: 0;
@@ -424,44 +265,64 @@
 }
 
 .pedido-resumo h2 {
+  margin: 0;
   color: #c7d2c7;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 11px;
+  font-weight: 400;
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 
 .pedido-modelo {
   margin: 10px 0 35px;
-  color: #fff;
+  color: #ffffff;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 34px;
   font-weight: 400;
+  line-height: 1.2;
+}
+
+/* =========================================================
+   8. VALORES DO ALUGUEL
+   ========================================================= */
+
+.pedido-resumo-linha,
+.pedido-resumo-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .pedido-resumo-linha {
   padding: 20px 0;
-  border-top: 1px solid rgba(255,255,255,.2);
   color: #d4dfd6;
   font-size: 12px;
 }
 
 .pedido-resumo-linha strong {
-  color: #fff;
+  color: #ffffff;
   font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .pedido-resumo-total {
   margin-top: 10px;
   padding: 26px 0;
-  border-top: 1px solid rgba(255,255,255,.35);
-  color: #fff;
+  border-top-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  font-size: 14px;
 }
 
 .pedido-resumo-total strong {
-  color: #fff;
+  color: #ffffff;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 28px;
   font-weight: 400;
+  white-space: nowrap;
 }
 
 .pedido-nota {
@@ -470,6 +331,38 @@
   font-size: 11px;
   line-height: 1.8;
 }
+
+/* =========================================================
+   9. MENSAGENS
+   ========================================================= */
+
+.pedido-mensagem {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pedido-erro {
+  border: 1px solid #d9a4a4;
+  background: #fff0f0;
+  color: #8c2929;
+}
+
+.pedido-sucesso {
+  border: 1px solid #a7c6ad;
+  background: #eff8f0;
+  color: #245c32;
+}
+
+.pedido-sucesso p {
+  margin: 6px 0 0;
+}
+
+/* =========================================================
+   10. RESPONSIVIDADE — TABLETS
+   ========================================================= */
 
 @media (max-width: 850px) {
   .pedido-layout {
@@ -480,6 +373,10 @@
     position: static;
   }
 }
+
+/* =========================================================
+   11. RESPONSIVIDADE — CELULARES
+   ========================================================= */
 
 @media (max-width: 500px) {
   .pedido-page {
@@ -492,6 +389,7 @@
 
   .pedido-heading h1 {
     font-size: 46px;
+    letter-spacing: -1px;
   }
 
   .pedido-form,
@@ -501,5 +399,17 @@
 
   .pedido-fields {
     grid-template-columns: 1fr;
+  }
+
+  .pedido-form-section h2 {
+    font-size: 22px;
+  }
+
+  .pedido-resumo img {
+    height: 200px;
+  }
+
+  .pedido-resumo-total strong {
+    font-size: 24px;
   }
 }

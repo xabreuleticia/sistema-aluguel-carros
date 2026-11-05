@@ -1,6 +1,7 @@
 
 package br.com.vertice.controller;
 
+import br.com.vertice.dto.CriarPedidoRequest;
 import br.com.vertice.model.Pedido;
 import br.com.vertice.service.PedidoService;
 
@@ -16,30 +17,23 @@ public class PedidoController {
 
     private final PedidoService pedidoService;
 
-    public PedidoController(
-            PedidoService pedidoService
-    ) {
+    public PedidoController(PedidoService pedidoService) {
         this.pedidoService = pedidoService;
     }
 
     @GetMapping("/meus")
     public List<Pedido> listarMeusPedidos(
-            Authentication authentication
+        Authentication authentication
     ) {
-        return pedidoService.listarMeusPedidos(
-            authentication
-        );
+        return pedidoService.listarMeusPedidos(authentication);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Pedido criar(
-            @RequestBody Pedido pedido,
-            Authentication authentication
+        @RequestBody CriarPedidoRequest dados,
+        Authentication authentication
     ) {
-        return pedidoService.criar(
-            pedido,
-            authentication
-        );
+        return pedidoService.criar(dados, authentication);
     }
 }

@@ -1,0 +1,541 @@
+
+/* =========================================
+   VÉRTICE — CATÁLOGO DE AUTOMÓVEIS
+   ========================================= */
+
+.catalogo-page {
+  min-height: 100vh;
+  background: var(--vertice-cream);
+  color: var(--vertice-green-dark);
+}
+
+/* =========================================
+   BANNER PRINCIPAL
+   ========================================= */
+
+.catalogo-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 540px;
+  overflow: hidden;
+  background: var(--vertice-green-dark);
+}
+
+.catalogo-hero-imagem {
+  position: absolute;
+  inset: 0;
+}
+
+.catalogo-hero-imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 55%;
+  filter: brightness(0.7) saturate(0.85);
+}
+
+.catalogo-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(5, 25, 19, 0.94) 0%,
+    rgba(8, 30, 23, 0.78) 38%,
+    rgba(9, 28, 23, 0.16) 100%
+  );
+  pointer-events: none;
+}
+
+.catalogo-hero-conteudo {
+  position: relative;
+  z-index: 1;
+  max-width: 850px;
+  padding: 85px clamp(30px, 8vw, 150px);
+  color: var(--vertice-white);
+}
+
+.catalogo-eyebrow {
+  display: inline-block;
+  color: #8b927f;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.catalogo-hero .catalogo-eyebrow {
+  color: #d9c8a0;
+}
+
+.catalogo-hero h1 {
+  margin: 28px 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(48px, 6vw, 88px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -2px;
+}
+
+.catalogo-hero p {
+  max-width: 430px;
+  color: #e0e5dc;
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.catalogo-hero-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 53px;
+  margin-top: 28px;
+  padding: 0 28px;
+  border: 1px solid #e4dfd0;
+  background: var(--vertice-cream);
+  color: var(--vertice-green);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  transition: 0.25s ease;
+}
+
+.catalogo-hero-botao:hover {
+  background: transparent;
+  color: white;
+  transform: translateY(-3px);
+}
+
+/* =========================================
+   CONTEÚDO DO CATÁLOGO
+   ========================================= */
+
+.catalogo-conteudo {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 95px clamp(24px, 7vw, 120px) 130px;
+}
+
+.catalogo-cabecalho {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 38px;
+}
+
+.catalogo-cabecalho h2 {
+  max-width: 720px;
+  margin: 18px 0 14px;
+  color: var(--vertice-green);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(38px, 4vw, 64px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+}
+
+.catalogo-cabecalho p {
+  color: var(--vertice-muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.catalogo-contagem {
+  padding-bottom: 8px;
+  color: #7c8277;
+  font-size: 12px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* =========================================
+   PESQUISA E ORDENAÇÃO
+   ========================================= */
+
+.catalogo-pesquisa {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  border: 1px solid var(--vertice-border);
+  background: var(--vertice-white);
+}
+
+.catalogo-campo-busca,
+.catalogo-campo-filtro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  padding: 0 24px;
+  color: var(--vertice-green);
+}
+
+.catalogo-campo-busca {
+  border-right: 1px solid var(--vertice-border);
+}
+
+.catalogo-campo-busca input,
+.catalogo-campo-filtro select {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--vertice-green-dark);
+  font-size: 14px;
+}
+
+.catalogo-campo-busca input::placeholder {
+  color: #9c9f95;
+}
+
+.catalogo-campo-busca:focus-within,
+.catalogo-campo-filtro:focus-within {
+  outline: 2px solid #8cae99;
+  outline-offset: -2px;
+}
+
+/* =========================================
+   CATEGORIAS
+   ========================================= */
+
+.catalogo-categorias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 26px 0 45px;
+}
+
+.catalogo-categorias button {
+  padding: 12px 22px;
+  border: 1px solid #d8dcd1;
+  border-radius: 0;
+  background: transparent;
+  color: #526056;
+  font-size: 12px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.catalogo-categorias button:hover {
+  border-color: var(--vertice-green);
+  background: #e8ede5;
+}
+
+.catalogo-categorias button.ativo {
+  border-color: var(--vertice-green);
+  background: var(--vertice-green);
+  color: white;
+}
+
+/* =========================================
+   GRID DE AUTOMÓVEIS
+   ========================================= */
+
+.catalogo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px 24px;
+}
+
+.catalogo-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e5e4da;
+  background: var(--vertice-white);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.catalogo-card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 22px 45px rgba(17, 43, 34, 0.12);
+}
+
+.catalogo-card-imagem {
+  position: relative;
+  height: 250px;
+  overflow: hidden;
+  background: #e7e7e0;
+}
+
+.catalogo-card-imagem > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.catalogo-card:hover .catalogo-card-imagem > img {
+  transform: scale(1.07);
+}
+
+.catalogo-imagem-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  color: #899085;
+}
+
+.catalogo-imagem-vazia span {
+  font-family: Georgia, serif;
+  font-size: 28px;
+  letter-spacing: 4px;
+}
+
+.catalogo-imagem-vazia small {
+  font-size: 11px;
+}
+
+.catalogo-card-categoria {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  padding: 9px 14px;
+  background: var(--vertice-cream);
+  color: var(--vertice-green);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.catalogo-status {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 9px 12px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.catalogo-status.disponivel {
+  background: #e2eddf;
+  color: #31563b;
+}
+
+.catalogo-status.indisponivel {
+  background: #f1e0dc;
+  color: #88463a;
+}
+
+/* =========================================
+   INFORMAÇÕES DOS VEÍCULOS
+   ========================================= */
+
+.catalogo-card-conteudo {
+  padding: 28px;
+}
+
+.catalogo-card-titulo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.catalogo-marca {
+  color: #899085;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.catalogo-card-titulo h3 {
+  margin: 8px 0 0;
+  color: var(--vertice-green);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  font-weight: 400;
+}
+
+.catalogo-ano {
+  color: #8b9086;
+  font-size: 12px;
+}
+
+.catalogo-especificacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  min-height: 55px;
+  margin: 25px 0;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #e8e8df;
+}
+
+.catalogo-especificacoes span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #737c72;
+  font-size: 11px;
+}
+
+/* =========================================
+   PREÇO E SOLICITAÇÃO
+   ========================================= */
+
+.catalogo-card-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.catalogo-preco strong {
+  display: block;
+  color: var(--vertice-green);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.catalogo-preco span {
+  display: block;
+  margin-top: 5px;
+  color: var(--vertice-muted);
+  font-size: 11px;
+}
+
+.catalogo-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 45px;
+  padding: 0 17px;
+  border: none;
+  background: var(--vertice-green);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.catalogo-botao:hover {
+  background: #2b5c4c;
+  transform: translateY(-2px);
+}
+
+.catalogo-botao.bloqueado {
+  background: #d6d9d1;
+  color: #6d756c;
+  cursor: not-allowed;
+}
+
+.catalogo-mensagem {
+  padding: 40px 0;
+  color: var(--vertice-muted);
+}
+
+.catalogo-erro {
+  color: #a43b35;
+}
+
+.catalogo-vazio {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.catalogo-vazio h3 {
+  font-family: Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.catalogo-vazio p {
+  color: var(--vertice-muted);
+}
+
+.catalogo-vazio button {
+  margin-top: 12px;
+  padding: 12px 18px;
+  border: none;
+  background: var(--vertice-green);
+  color: white;
+}
+
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+
+@media (max-width: 1100px) {
+  .catalogo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .catalogo-hero {
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 700px) {
+  .catalogo-hero {
+    min-height: 500px;
+  }
+
+  .catalogo-hero-conteudo {
+    padding: 65px 7%;
+  }
+
+  .catalogo-hero h1 {
+    font-size: clamp(44px, 11vw, 65px);
+  }
+
+  .catalogo-conteudo {
+    padding: 65px 5% 80px;
+  }
+
+  .catalogo-cabecalho {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .catalogo-pesquisa {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogo-campo-busca {
+    border-right: none;
+    border-bottom: 1px solid var(--vertice-border);
+  }
+
+  .catalogo-categorias {
+    gap: 8px;
+  }
+
+  .catalogo-categorias button {
+    padding: 10px 15px;
+  }
+
+  .catalogo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogo-card-imagem {
+    height: 250px;
+  }
+
+  .catalogo-card-conteudo {
+    padding: 23px;
+  }
+}
+
+@media (max-width: 400px) {
+  .catalogo-card-rodape {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .catalogo-botao {
+    width: 100%;
+  }
+}

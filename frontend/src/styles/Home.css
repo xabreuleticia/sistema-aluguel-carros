@@ -811,3 +811,270 @@
     padding: 23px;
   }
 }
+
+/* =========================================
+   HOME — APRESENTAÇÃO DA VÉRTICE
+   ========================================= */
+
+.home-introducao {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 120px 7%;
+  text-align: center;
+}
+
+.home-introducao .eyebrow,
+.home-secao-titulo .eyebrow,
+.home-destaques .eyebrow {
+  color: #8b927f;
+  font-size: 11px;
+  letter-spacing: 3px;
+}
+
+.home-introducao h2,
+.home-secao-titulo h2,
+.home-destaques h2,
+.home-cta h2 {
+  margin: 22px 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(38px, 4.5vw, 65px);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -1.5px;
+}
+
+.home-introducao p {
+  max-width: 650px;
+  margin: 0 auto 28px;
+  color: var(--vertice-muted);
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.home-link-texto {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid currentColor;
+  color: var(--vertice-green);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-link-texto:hover {
+  opacity: 0.7;
+}
+
+/* DIFERENCIAIS */
+
+.home-diferenciais {
+  padding: 95px clamp(24px, 7vw, 120px);
+  background: #e9ebe3;
+}
+
+.home-secao-titulo {
+  max-width: 1300px;
+  margin: 0 auto 45px;
+}
+
+.home-diferenciais-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.home-diferencial {
+  padding: 38px 30px;
+  border: 1px solid #d9ddd2;
+  background: var(--vertice-white);
+  color: var(--vertice-green);
+}
+
+.home-diferencial h3 {
+  margin: 26px 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.home-diferencial p {
+  margin: 0;
+  color: var(--vertice-muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* CARROS EM DESTAQUE */
+
+.home-destaques {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 110px clamp(24px, 7vw, 120px);
+}
+
+.home-destaques-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 45px;
+}
+
+.home-destaques-cabecalho h2 {
+  max-width: 650px;
+}
+
+.home-destaques-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.home-destaque-card {
+  min-width: 0;
+  background: var(--vertice-white);
+  border: 1px solid var(--vertice-border);
+}
+
+.home-destaque-imagem {
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+  background: #e7e7e0;
+}
+
+.home-destaque-imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.home-destaque-card:hover img {
+  transform: scale(1.05);
+}
+
+.home-destaque-imagem span {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  padding: 9px 14px;
+  background: var(--vertice-cream);
+  color: var(--vertice-green);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.home-destaque-conteudo {
+  padding: 28px;
+}
+
+.home-destaque-marca {
+  color: #899085;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.home-destaque-conteudo h3 {
+  margin: 10px 0 24px;
+  color: var(--vertice-green);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 29px;
+  font-weight: 400;
+}
+
+.home-destaque-conteudo a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--vertice-green);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* CHAMADA FINAL */
+
+.home-cta {
+  padding: 105px 7%;
+  background: var(--vertice-green-dark);
+  color: var(--vertice-white);
+  text-align: center;
+}
+
+.home-cta .eyebrow {
+  color: #d9c8a0;
+}
+
+.home-cta p {
+  max-width: 450px;
+  margin: 0 auto 30px;
+  color: #d9e1d9;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.home-cta > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 25px;
+  background: var(--vertice-cream);
+  color: var(--vertice-green);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.home-cta > a:hover {
+  transform: translateY(-3px);
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 900px) {
+  .home-diferenciais-grid,
+  .home-destaques-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .home-introducao {
+    padding: 75px 6%;
+  }
+
+  .home-diferenciais,
+  .home-destaques {
+    padding: 70px 6%;
+  }
+
+  .home-diferenciais-grid,
+  .home-destaques-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-destaques-cabecalho {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .home-destaque-imagem {
+    height: 250px;
+  }
+
+  .home-cta {
+    padding: 80px 6%;
+  }
+}

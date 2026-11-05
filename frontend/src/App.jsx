@@ -10,6 +10,7 @@ import Cadastro from "./pages/Cadastro";
 import PedidoAluguel from "./pages/PedidoAluguel";
 import MeusPedidos from "./pages/MeusPedidos";
 import Agente from "./pages/Agente";
+import Carros from "./pages/Carros";
 
 import "./App.css";
 
@@ -45,6 +46,8 @@ function App() {
             </RotaProtegida>
           }
         />
+
+        <Route path="/carros" element={<Carros />} />
 
         <Route
           path="/agente"

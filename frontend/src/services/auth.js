@@ -12,7 +12,9 @@ async function lerResposta(response) {
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error("E-mail ou senha incorretos.");
+        throw new Error(
+            "A solicitação não foi autorizada pelo servidor."
+        );
     }
 
     if (response.status === 403) {

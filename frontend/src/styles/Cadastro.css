@@ -1,0 +1,139 @@
+
+.cadastro-page {
+  min-height: 100vh;
+}
+
+.cadastro-page .login-visual {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 700px;
+}
+
+.cadastro-page .login-content {
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.cadastro-container {
+  width: 100%;
+  max-width: 590px;
+}
+
+.cadastro-form {
+  gap: 18px;
+}
+
+.cadastro-form h3 {
+  margin: 30px 0 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #deded4;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 23px;
+  font-weight: 400;
+  color: #173f35;
+}
+
+.cadastro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cadastro-grid .login-field {
+  min-width: 0;
+}
+
+.cadastro-form .login-field input {
+  width: 100%;
+}
+
+.cadastro-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: #526158;
+  cursor: pointer;
+}
+
+.cadastro-checkbox input {
+  accent-color: #173f35;
+}
+
+.cadastro-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.cadastro-section-heading h3 {
+  flex: 1;
+}
+
+.cadastro-section-heading span {
+  font-size: 11px;
+  color: #788078;
+}
+
+.cadastro-emprego {
+  padding: 20px;
+  background: #f5f2e9;
+  border: 1px solid #e2dfd5;
+}
+
+.cadastro-emprego strong {
+  font-size: 13px;
+  color: #173f35;
+}
+
+.cadastro-remove {
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: #a34b43;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.cadastro-add {
+  width: 100%;
+  padding: 15px;
+  border: 1px dashed #8b9c8e;
+  background: transparent;
+  color: #173f35;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cadastro-add:hover {
+  background: #edf1e9;
+}
+
+@media (max-width: 1000px) {
+  .cadastro-page .login-visual {
+    position: relative;
+    height: auto;
+    min-height: 380px;
+  }
+}
+
+@media (max-width: 600px) {
+  .cadastro-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cadastro-container {
+    max-width: 100%;
+  }
+
+  .cadastro-form h3 {
+    font-size: 21px;
+  }
+
+  .cadastro-emprego {
+    padding: 14px;
+  }
+}

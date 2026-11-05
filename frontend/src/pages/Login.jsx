@@ -1,11 +1,18 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { entrar } from "../services/auth";
 import "../styles/Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const mensagemCadastro = location.state?.mensagem;
 
   const [tipoUsuario, setTipoUsuario] = useState("cliente");
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -29,13 +36,16 @@ export default function Login() {
       } else if (dados.perfil === "CLIENTE") {
         navigate("/pedidos", { replace: true });
       } else {
-        setErro("Não foi possível identificar o perfil da conta.");
+        setErro(
+          "Não foi possível identificar o perfil da sua conta."
+        );
       }
     } catch (error) {
       setErro(
         error instanceof TypeError
           ? "Não foi possível conectar ao servidor."
-          : error.message || "Não foi possível realizar o login."
+          : error.message ||
+              "Não foi possível realizar o login."
       );
     } finally {
       setCarregando(false);
@@ -105,10 +115,21 @@ export default function Login() {
             e acompanhar seus pedidos.
           </p>
 
+          {mensagemCadastro && (
+            <p
+              className="cadastro-success"
+              role="status"
+            >
+              {mensagemCadastro}
+            </p>
+          )}
+
           <div className="login-tabs">
             <button
               type="button"
-              className={tipoUsuario === "cliente" ? "active" : ""}
+              className={
+                tipoUsuario === "cliente" ? "active" : ""
+              }
               onClick={() => {
                 setTipoUsuario("cliente");
                 setErro("");
@@ -119,7 +140,9 @@ export default function Login() {
 
             <button
               type="button"
-              className={tipoUsuario === "agente" ? "active" : ""}
+              className={
+                tipoUsuario === "agente" ? "active" : ""
+              }
               onClick={() => {
                 setTipoUsuario("agente");
                 setErro("");
@@ -129,9 +152,14 @@ export default function Login() {
             </button>
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit}>
+          <form
+            className="login-form"
+            onSubmit={handleSubmit}
+          >
             <div className="login-field">
-              <label htmlFor="usuario">E-mail</label>
+              <label htmlFor="usuario">
+                E-mail
+              </label>
 
               <input
                 id="usuario"
@@ -148,13 +176,19 @@ export default function Login() {
             </div>
 
             <div className="login-field">
-              <label htmlFor="senha">Senha</label>
+              <label htmlFor="senha">
+                Senha
+              </label>
 
               <div className="login-password">
                 <input
                   id="senha"
                   name="senha"
-                  type={mostrarSenha ? "text" : "password"}
+                  type={
+                    mostrarSenha
+                      ? "text"
+                      : "password"
+                  }
                   placeholder="Digite sua senha"
                   value={senha}
                   onChange={(event) =>
@@ -176,7 +210,9 @@ export default function Login() {
                       : "Mostrar senha"
                   }
                 >
-                  {mostrarSenha ? "Ocultar" : "Mostrar"}
+                  {mostrarSenha
+                    ? "Ocultar"
+                    : "Mostrar"}
                 </button>
               </div>
             </div>
@@ -196,7 +232,10 @@ export default function Login() {
             </div>
 
             {erro && (
-              <p role="alert" className="login-error">
+              <p
+                role="alert"
+                className="login-error"
+              >
                 {erro}
               </p>
             )}
@@ -226,7 +265,8 @@ export default function Login() {
 
         <div className="login-content-footer">
           <p>
-            Acesso exclusivo para clientes e agentes cadastrados.
+            Acesso exclusivo para clientes
+            e agentes cadastrados.
           </p>
 
           <span>VÉRTICE © 2026</span>

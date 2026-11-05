@@ -448,3 +448,34 @@
   opacity: 0.65;
   cursor: wait;
 }
+
+/* Mensagem de cadastro realizado */
+
+.cadastro-success {
+  padding: 13px 16px;
+  margin: 18px 0;
+  color: #173f35;
+  background: #edf4eb;
+  border: 1px solid #bdd2bd;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Mensagens de erro */
+
+.login-error {
+  padding: 13px 16px;
+  margin: 0;
+  color: #8c302c;
+  background: #fff0ed;
+  border: 1px solid #e8c3bd;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Botão durante o carregamento */
+
+.login-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}

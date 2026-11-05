@@ -1,10 +1,15 @@
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Header from "./components/Header";
+import RotaProtegida from "./components/RotaProtegida";
+
 import Home from "./pages/Home";
-import PedidoAluguel from "./pages/PedidoAluguel";
-import "./App.css";
 import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
+import PedidoAluguel from "./pages/PedidoAluguel";
+
+import "./App.css";
 
 function App() {
   return (
@@ -13,11 +18,40 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+
         <Route path="/login" element={<Login />} />
-        <Route path="/cadastro" element={<h1>Cadastro</h1>} />
-        <Route path="/pedidos" element={<h1>Meus pedidos</h1>} />
-        <Route path="/pedido/novo" element={<PedidoAluguel />} />
-        <Route path="/agente" element={<h1>Painel do agente</h1>} />
+
+        <Route
+          path="/cadastro"
+          element={<Cadastro />}
+        />
+
+        <Route
+          path="/pedidos"
+          element={
+            <RotaProtegida perfisPermitidos={["CLIENTE"]}>
+              <h1>Meus pedidos</h1>
+            </RotaProtegida>
+          }
+        />
+
+        <Route
+          path="/pedido/novo"
+          element={
+            <RotaProtegida perfisPermitidos={["CLIENTE"]}>
+              <PedidoAluguel />
+            </RotaProtegida>
+          }
+        />
+
+        <Route
+          path="/agente"
+          element={
+            <RotaProtegida perfisPermitidos={["AGENTE"]}>
+              <h1>Painel do agente</h1>
+            </RotaProtegida>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

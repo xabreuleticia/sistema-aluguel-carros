@@ -91,7 +91,7 @@ public class DesativacaoContaService {
         boolean possuiPedidosNaoFinalizados =
                 pedidoRepository.existsByClienteIdAndStatusNotIn(
                         cliente.getId(),
-                        List.of("CANCELADO", "REJEITADO")
+                        List.of("CANCELADO", "RECUSADO")
                 );
 
         if (possuiPedidosNaoFinalizados) {

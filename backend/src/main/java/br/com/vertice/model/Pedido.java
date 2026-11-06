@@ -1,3 +1,4 @@
+
 package br.com.vertice.model;
 
 import jakarta.persistence.Column;
@@ -42,12 +43,25 @@ public class Pedido {
     @Column(name = "criado_em", insertable = false, updatable = false)
     private OffsetDateTime criadoEm;
 
-    // Usado apenas para calcular o valor total, não é salvo no banco.
+    @Column(name = "parecer_financeiro")
+    private String parecerFinanceiro;
+
+    @Column(name = "justificativa_financeira")
+    private String justificativaFinanceira;
+
+    @Column(name = "analisado_em")
+    private OffsetDateTime analisadoEm;
+
+    @Column(name = "banco_agente_id")
+    private UUID bancoAgenteId;
+
+    @Column(name = "valor_credito")
+    private BigDecimal valorCredito;
+
     @Transient
     private BigDecimal valorDiaria;
 
-    public Pedido() {
-    }
+    public Pedido() {}
 
     public UUID getId() {
         return id;
@@ -103,6 +117,46 @@ public class Pedido {
 
     public OffsetDateTime getCriadoEm() {
         return criadoEm;
+    }
+
+    public String getParecerFinanceiro() {
+        return parecerFinanceiro;
+    }
+
+    public void setParecerFinanceiro(String parecerFinanceiro) {
+        this.parecerFinanceiro = parecerFinanceiro;
+    }
+
+    public String getJustificativaFinanceira() {
+        return justificativaFinanceira;
+    }
+
+    public void setJustificativaFinanceira(String justificativaFinanceira) {
+        this.justificativaFinanceira = justificativaFinanceira;
+    }
+
+    public OffsetDateTime getAnalisadoEm() {
+        return analisadoEm;
+    }
+
+    public void setAnalisadoEm(OffsetDateTime analisadoEm) {
+        this.analisadoEm = analisadoEm;
+    }
+
+    public UUID getBancoAgenteId() {
+        return bancoAgenteId;
+    }
+
+    public void setBancoAgenteId(UUID bancoAgenteId) {
+        this.bancoAgenteId = bancoAgenteId;
+    }
+
+    public BigDecimal getValorCredito() {
+        return valorCredito;
+    }
+
+    public void setValorCredito(BigDecimal valorCredito) {
+        this.valorCredito = valorCredito;
     }
 
     public BigDecimal getValorDiaria() {

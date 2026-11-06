@@ -540,3 +540,130 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   PARECER FINANCEIRO
+   ========================================================= */
+
+.agente-form-parecer {
+  margin-top: 22px;
+  padding: 22px;
+  background: #fffef9;
+  border: 1px solid #dfe5da;
+  border-radius: 5px;
+}
+
+.agente-form-parecer h4 {
+  margin: 0 0 20px;
+  color: #173f35;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.agente-form-parecer label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 18px;
+  color: #263a32;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.agente-form-parecer input,
+.agente-form-parecer select,
+.agente-form-parecer textarea {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #d9dfd6;
+  border-radius: 4px;
+  background: #fff;
+  color: #263a32;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.agente-form-parecer textarea {
+  resize: vertical;
+}
+
+.agente-form-parecer input:focus,
+.agente-form-parecer select:focus,
+.agente-form-parecer textarea:focus {
+  border-color: #173f35;
+}
+
+.agente-campos-credito {
+  margin: 18px 0;
+  padding: 18px;
+  background: #f5f2e9;
+  border-radius: 4px;
+}
+
+.agente-campos-credito p {
+  margin: 0 0 18px;
+  color: #173f35;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.agente-campos-credito small {
+  color: #697b6e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.agente-botao-salvar-parecer {
+  padding: 14px 22px;
+  background: #173f35;
+  border: 1px solid #173f35;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.agente-botao-salvar-parecer:hover:not(:disabled) {
+  background: #285a4a;
+}
+
+.agente-botao-salvar-parecer:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.agente-parecer-registrado {
+  margin-top: 18px;
+  padding: 18px;
+  border-left: 4px solid #173f35;
+  background: #e8eee6;
+  color: #173f35;
+}
+
+.agente-parecer-registrado strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.agente-parecer-registrado p {
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .agente-form-parecer {
+    padding: 15px;
+  }
+
+  .agente-botao-salvar-parecer {
+    width: 100%;
+  }
+}

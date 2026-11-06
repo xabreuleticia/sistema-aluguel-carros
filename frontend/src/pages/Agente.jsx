@@ -1,123 +1,57 @@
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/Agente.css";
 
-const formatarMoeda = (valor) =>
+const moeda = (valor) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(Number(valor || 0));
 
-const formatarData = (data) => {
-  if (!data) return "Não informada";
-  const [ano, mes, dia] = data.substring(0, 10).split("-");
+function dataBR(valor) {
+  if (!valor) return "Não informada";
+  const [ano, mes, dia] = valor.substring(0, 10).split("-");
   return `${dia}/${mes}/${ano}`;
-};
+}
 
-const statusTexto = {
+const statusNome = {
   PENDENTE: "Pendente",
   APROVADO: "Aprovado",
   RECUSADO: "Recusado",
 };
 
-async function obterMensagemErro(resposta, acao) {
-  let dados = {};
-
+async function mensagemDaResposta(resposta) {
   try {
-    dados = await resposta.json();
+    const dados = await resposta.json();
+    return (
+      dados.detail ||
+      dados.message ||
+      dados.reason ||
+      `Erro ${resposta.status}`
+    );
   } catch {
-    // A resposta pode não conter JSON.
+    return `Erro ${resposta.status}. Verifique o servidor.`;
   }
-
-  const mensagemServidor = [
-    dados.detail,
-    dados.message,
-    dados.reason,
-  ]
-    .filter((valor) => typeof valor === "string")
-    .join(" ");
-
-  const mensagemNormalizada = mensagemServidor
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-  if (resposta.status === 409) {
-    if (
-      mensagemNormalizada.includes("reserva") ||
-      mensagemNormalizada.includes("periodo") ||
-      mensagemNormalizada.includes("disponivel") ||
-      mensagemNormalizada.includes("conflito")
-    ) {
-      return (
-        "Não foi possível aprovar a solicitação. " +
-        "Este automóvel já possui uma reserva aprovada " +
-        "para o período selecionado."
-      );
-    }
-
-    if (mensagemNormalizada.includes("analisado")) {
-      return (
-        "Esta solicitação já foi analisada. " +
-        "Atualize a lista para visualizar seu status atual."
-      );
-    }
-
-    return acao === "aprovar"
-      ? "Não foi possível aprovar o pedido. Verifique se o automóvel está disponível para as datas selecionadas."
-      : "Não foi possível recusar o pedido. Atualize a lista e tente novamente.";
-  }
-
-  if (resposta.status === 401) {
-    return "Sua sessão expirou. Faça login novamente.";
-  }
-
-  if (resposta.status === 403) {
-    return "Você não possui permissão para realizar esta ação.";
-  }
-
-  if (resposta.status === 404) {
-    return "Esta solicitação não foi encontrada. Atualize a lista.";
-  }
-
-  if (resposta.status >= 500) {
-    return "O servidor apresentou um problema. Tente novamente mais tarde.";
-  }
-
-  return (
-    mensagemServidor ||
-    "Não foi possível atualizar o pedido. Tente novamente."
-  );
 }
 
 export default function Agente() {
   const [pedidos, setPedidos] = useState([]);
   const [automoveis, setAutomoveis] = useState([]);
+  const [analises, setAnalises] = useState({});
+  const [formularios, setFormularios] = useState({});
   const [filtro, setFiltro] = useState("TODOS");
   const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [processando, setProcessando] = useState(null);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const [analises, setAnalises] = useState({});
-  const [analisandoId, setAnalisandoId] = useState(null);
-  const alertaErroRef = useRef(null);
-
-  useEffect(() => {
-    if (erro && alertaErroRef.current) {
-      alertaErroRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  }, [erro]);
 
   async function carregarDados() {
     setCarregando(true);
     setErro("");
 
     try {
-      const [resPedidos, resAutomoveis] = await Promise.all([
+      const [rp, ra] = await Promise.all([
         fetch("/api/agente/pedidos", {
           credentials: "include",
         }),
@@ -126,28 +60,17 @@ export default function Agente() {
         }),
       ]);
 
-      if (!resPedidos.ok) {
-        throw new Error(
-          resPedidos.status === 403
-            ? "Você não possui permissão de agente."
-            : resPedidos.status === 401
-              ? "Faça login para acessar o painel."
-              : "Não foi possível carregar os pedidos."
-        );
+      if (!rp.ok) {
+        throw new Error(await mensagemDaResposta(rp));
       }
 
-      const dadosPedidos = await resPedidos.json();
-      setPedidos(dadosPedidos);
+      setPedidos(await rp.json());
 
-      if (resAutomoveis.ok) {
-        setAutomoveis(await resAutomoveis.json());
+      if (ra.ok) {
+        setAutomoveis(await ra.json());
       }
-    } catch (error) {
-      setErro(
-        error.message === "Failed to fetch"
-          ? "Não foi possível conectar ao servidor. Verifique se o backend está funcionando."
-          : error.message
-      );
+    } catch (e) {
+      setErro(e.message);
     } finally {
       setCarregando(false);
     }
@@ -157,7 +80,17 @@ export default function Agente() {
     carregarDados();
   }, []);
 
-  async function obterCsrf() {
+  function atualizarFormulario(id, campo, valor) {
+    setFormularios((atual) => ({
+      ...atual,
+      [id]: {
+        ...atual[id],
+        [campo]: valor,
+      },
+    }));
+  }
+
+  async function csrf() {
     const resposta = await fetch("/api/auth/csrf", {
       credentials: "include",
     });
@@ -169,172 +102,236 @@ export default function Agente() {
     return resposta.json();
   }
 
-  async function consultarAnalise(id) {
-    setAnalisandoId(id);
-    setErro("");
+  async function requisicaoSegura(url, metodo, corpo) {
+    const token = await csrf();
 
-    try {
-      const resposta = await fetch(
-        `/api/agente/pedidos/${id}/analise-financeira`,
-        {
-          credentials: "include",
-        }
-      );
+    const resposta = await fetch(url, {
+      method: metodo,
+      credentials: "include",
+      headers: {
+        [token.headerName]: token.token,
+        ...(corpo ? { "Content-Type": "application/json" } : {}),
+      },
+      ...(corpo ? { body: JSON.stringify(corpo) } : {}),
+    });
 
-      if (!resposta.ok) {
-        throw new Error(
-          "Não foi possível consultar os dados financeiros do cliente."
-        );
-      }
-
-      const dados = await resposta.json();
-
-      setAnalises((anteriores) => ({
-        ...anteriores,
-        [id]: dados,
-      }));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setAnalisandoId(null);
+    if (!resposta.ok) {
+      throw new Error(await mensagemDaResposta(resposta));
     }
+
+    return resposta.json();
   }
 
-  async function decidirPedido(id, decisao) {
-    const acao = decisao === "aprovar" ? "aprovar" : "recusar";
-
-    if (acao === "aprovar" && !analises[id]) {
-      setErro(
-        "Consulte primeiro os dados financeiros do cliente antes de aprovar."
-      );
-      return;
-    }
-
-    const confirmado = window.confirm(
-      `Deseja realmente ${acao} esta solicitação?`
-    );
-
-    if (!confirmado) return;
-
+  async function consultarAnalise(id) {
     setProcessando(id);
     setErro("");
     setMensagem("");
 
     try {
-      const csrf = await obterCsrf();
-
       const resposta = await fetch(
-        `/api/agente/pedidos/${id}/${acao}`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            [csrf.headerName]: csrf.token,
-          },
-        }
+        `/api/agente/pedidos/${id}/analise-financeira`,
+        { credentials: "include" }
       );
 
       if (!resposta.ok) {
-        const mensagemErro = await obterMensagemErro(
-          resposta,
-          acao
-        );
-
-        throw new Error(mensagemErro);
+        throw new Error(await mensagemDaResposta(resposta));
       }
 
-      const pedidoAtualizado = await resposta.json();
+      const dados = await resposta.json();
 
-      setPedidos((anteriores) =>
-        anteriores.map((pedido) =>
-          pedido.id === id ? pedidoAtualizado : pedido
-        )
-      );
-
-      setMensagem(
-        acao === "aprovar"
-          ? "Solicitação aprovada com sucesso."
-          : "Solicitação recusada com sucesso."
-      );
-    } catch (error) {
-      setErro(
-        error.message === "Failed to fetch"
-          ? "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente."
-          : error.message
-      );
+      setAnalises((atual) => ({
+        ...atual,
+        [id]: dados,
+      }));
+    } catch (e) {
+      setErro(e.message);
     } finally {
       setProcessando(null);
     }
   }
 
-  const quantidadePendentes = pedidos.filter(
-    (pedido) => pedido.status === "PENDENTE"
-  ).length;
+  async function registrarParecer(pedido) {
+    const form = formularios[pedido.id] || {};
 
-  const quantidadeAprovados = pedidos.filter(
-    (pedido) => pedido.status === "APROVADO"
-  ).length;
+    if (!analises[pedido.id]) {
+      setErro("Consulte primeiro os dados financeiros.");
+      return;
+    }
 
-  const quantidadeRecusados = pedidos.filter(
-    (pedido) => pedido.status === "RECUSADO"
-  ).length;
+    if (!form.parecer || !form.justificativa?.trim()) {
+      setErro("Informe o parecer e a justificativa.");
+      return;
+    }
 
-  const pedidosFiltrados = pedidos
-    .filter((pedido) => {
-      const correspondeStatus =
-        filtro === "TODOS" || pedido.status === filtro;
+    const bancoAgenteId = form.bancoAgenteId?.trim() || null;
+    const valorCredito = form.valorCredito
+      ? Number(form.valorCredito)
+      : null;
 
-      const automovel = automoveis.find(
-        (carro) => carro.id === pedido.automovelId
+    if (
+      form.parecer === "DESFAVORAVEL" &&
+      (bancoAgenteId || valorCredito !== null)
+    ) {
+      setErro(
+        "Parecer desfavorável não pode conceder crédito."
+      );
+      return;
+    }
+
+    if (
+      form.parecer === "FAVORAVEL" &&
+      Boolean(bancoAgenteId) !== (valorCredito !== null)
+    ) {
+      setErro(
+        "Para conceder crédito, informe o ID do agente e o valor."
+      );
+      return;
+    }
+
+    if (
+      valorCredito !== null &&
+      (!Number.isFinite(valorCredito) || valorCredito <= 0)
+    ) {
+      setErro("Informe um valor de crédito válido.");
+      return;
+    }
+
+    setProcessando(pedido.id);
+    setErro("");
+    setMensagem("");
+
+    try {
+      const atualizado = await requisicaoSegura(
+        `/api/agente/pedidos/${pedido.id}/parecer-financeiro`,
+        "POST",
+        {
+          parecer: form.parecer,
+          justificativa: form.justificativa.trim(),
+          bancoAgenteId:
+            form.parecer === "FAVORAVEL"
+              ? bancoAgenteId
+              : null,
+          valorCredito:
+            form.parecer === "FAVORAVEL"
+              ? valorCredito
+              : null,
+        }
       );
 
-      const textoBusca = [
+      setPedidos((lista) =>
+        lista.map((item) =>
+          item.id === pedido.id ? atualizado : item
+        )
+      );
+
+      setMensagem("Parecer financeiro registrado com sucesso.");
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setProcessando(null);
+    }
+  }
+
+  async function decidirPedido(pedido, acao) {
+    if (
+      acao === "aprovar" &&
+      pedido.parecerFinanceiro !== "FAVORAVEL"
+    ) {
+      setErro(
+        "Registre um parecer financeiro favorável antes de aprovar."
+      );
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Deseja realmente ${acao} este pedido?`
+      )
+    ) {
+      return;
+    }
+
+    setProcessando(pedido.id);
+    setErro("");
+    setMensagem("");
+
+    try {
+      const atualizado = await requisicaoSegura(
+        `/api/agente/pedidos/${pedido.id}/${acao}`,
+        "PATCH"
+      );
+
+      setPedidos((lista) =>
+        lista.map((item) =>
+          item.id === pedido.id ? atualizado : item
+        )
+      );
+
+      setMensagem(
+        acao === "aprovar"
+          ? "Pedido aprovado e contrato gerado com sucesso."
+          : "Pedido recusado com sucesso."
+      );
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setProcessando(null);
+    }
+  }
+
+  const pendentes = pedidos.filter(
+    (p) => p.status === "PENDENTE"
+  ).length;
+
+  const aprovados = pedidos.filter(
+    (p) => p.status === "APROVADO"
+  ).length;
+
+  const recusados = pedidos.filter(
+    (p) => p.status === "RECUSADO"
+  ).length;
+
+  const listaFiltrada = pedidos
+    .filter((pedido) => {
+      if (
+        filtro !== "TODOS" &&
+        pedido.status !== filtro
+      ) {
+        return false;
+      }
+
+      const carro = automoveis.find(
+        (a) => a.id === pedido.automovelId
+      );
+
+      const texto = [
         pedido.id,
         pedido.clienteId,
-        automovel?.marca,
-        automovel?.modelo,
-        automovel?.placa,
+        carro?.marca,
+        carro?.modelo,
+        carro?.placa,
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
 
-      return (
-        correspondeStatus &&
-        textoBusca.includes(busca.toLowerCase().trim())
-      );
+      return texto.includes(busca.toLowerCase().trim());
     })
     .sort((a, b) => {
-      if (
-        a.status === "PENDENTE" &&
-        b.status !== "PENDENTE"
-      ) {
+      if (a.status === "PENDENTE" && b.status !== "PENDENTE") {
         return -1;
       }
 
-      if (
-        a.status !== "PENDENTE" &&
-        b.status === "PENDENTE"
-      ) {
+      if (b.status === "PENDENTE" && a.status !== "PENDENTE") {
         return 1;
       }
 
-      const dataA = a.criadoEm
-        ? new Date(a.criadoEm).getTime()
-        : 0;
-
-      const dataB = b.criadoEm
-        ? new Date(b.criadoEm).getTime()
-        : 0;
-
-      return dataB - dataA;
+      return new Date(b.criadoEm || 0) -
+        new Date(a.criadoEm || 0);
     });
 
-  function nomeAutomovel(id) {
-    const carro = automoveis.find(
-      (item) => item.id === id
-    );
-
+  function nomeCarro(id) {
+    const carro = automoveis.find((a) => a.id === id);
     return carro
       ? `${carro.marca} ${carro.modelo}`
       : "Automóvel cadastrado";
@@ -348,65 +345,47 @@ export default function Agente() {
             <span className="agente-etiqueta">
               VÉRTICE / GESTÃO DE ALUGUÉIS
             </span>
-
             <h1>Painel do Agente</h1>
-
             <p>
-              Acompanhe solicitações, analise pedidos e
-              gerencie as reservas dos clientes.
+              Analise as solicitações e registre decisões
+              financeiras antes de aprovar os aluguéis.
             </p>
           </div>
 
           <button
             className="agente-atualizar"
             onClick={carregarDados}
-            disabled={
-              carregando || processando !== null
-            }
+            disabled={carregando || processando !== null}
           >
             Atualizar pedidos
           </button>
         </section>
 
         <section className="agente-indicadores">
-          <article className="agente-indicador">
-            <span>Total de solicitações</span>
-            <strong>{pedidos.length}</strong>
-            <small>Pedidos registrados</small>
-          </article>
-
-          <article className="agente-indicador">
-            <span>Aguardando análise</span>
-            <strong>{quantidadePendentes}</strong>
-            <small>Solicitações pendentes</small>
-          </article>
-
-          <article className="agente-indicador">
-            <span>Pedidos aprovados</span>
-            <strong>{quantidadeAprovados}</strong>
-            <small>Reservas autorizadas</small>
-          </article>
-
-          <article className="agente-indicador">
-            <span>Pedidos recusados</span>
-            <strong>{quantidadeRecusados}</strong>
-            <small>Solicitações encerradas</small>
-          </article>
+          {[
+            ["Total de solicitações", pedidos.length, "Pedidos registrados"],
+            ["Aguardando análise", pendentes, "Pedidos pendentes"],
+            ["Pedidos aprovados", aprovados, "Reservas autorizadas"],
+            ["Pedidos recusados", recusados, "Solicitações encerradas"],
+          ].map(([titulo, quantidade, subtitulo]) => (
+            <article className="agente-indicador" key={titulo}>
+              <span>{titulo}</span>
+              <strong>{quantidade}</strong>
+              <small>{subtitulo}</small>
+            </article>
+          ))}
         </section>
 
         <section className="agente-listagem">
           <div className="agente-listagem-topo">
-            <div>
-              <span className="agente-etiqueta">
-                CENTRAL DE SOLICITAÇÕES
-              </span>
-
-              <h2>Pedidos de aluguel</h2>
-
-              <p>
-                Consulte as solicitações e registre sua decisão.
-              </p>
-            </div>
+            <span className="agente-etiqueta">
+              CENTRAL DE SOLICITAÇÕES
+            </span>
+            <h2>Pedidos de aluguel</h2>
+            <p>
+              Consulte os dados financeiros, registre o
+              parecer e decida sobre o pedido.
+            </p>
           </div>
 
           <div className="agente-ferramentas">
@@ -414,44 +393,26 @@ export default function Agente() {
               type="search"
               placeholder="Buscar veículo, placa ou pedido..."
               value={busca}
-              onChange={(event) =>
-                setBusca(event.target.value)
-              }
-              aria-label="Buscar pedidos"
+              onChange={(e) => setBusca(e.target.value)}
             />
 
             <select
               value={filtro}
-              onChange={(event) =>
-                setFiltro(event.target.value)
-              }
-              aria-label="Filtrar pedidos"
+              onChange={(e) => setFiltro(e.target.value)}
             >
-              <option value="TODOS">
-                Todos os pedidos
-              </option>
-              <option value="PENDENTE">
-                Pendentes
-              </option>
-              <option value="APROVADO">
-                Aprovados
-              </option>
-              <option value="RECUSADO">
-                Recusados
-              </option>
+              <option value="TODOS">Todos os pedidos</option>
+              <option value="PENDENTE">Pendentes</option>
+              <option value="APROVADO">Aprovados</option>
+              <option value="RECUSADO">Recusados</option>
             </select>
           </div>
 
           {erro && (
             <div
-              ref={alertaErroRef}
               className="agente-alerta agente-alerta-erro"
               role="alert"
-              style={{ scrollMarginTop: "110px" }}
             >
-              <strong>
-                Não foi possível concluir a operação.
-              </strong>
+              <strong>Não foi possível concluir a operação.</strong>
               <span>{erro}</span>
             </div>
           )}
@@ -470,215 +431,292 @@ export default function Agente() {
             <div className="agente-vazio">
               Carregando solicitações...
             </div>
-          ) : pedidosFiltrados.length === 0 ? (
+          ) : listaFiltrada.length === 0 ? (
             <div className="agente-vazio">
-              <h3>Nenhuma solicitação encontrada</h3>
-              <p>
-                Não existem pedidos correspondentes
-                aos filtros selecionados.
-              </p>
+              <h3>Nenhum pedido encontrado</h3>
+              <p>Não há solicitações para os filtros selecionados.</p>
             </div>
           ) : (
             <div className="agente-pedidos">
-              {pedidosFiltrados.map((pedido) => (
-                <article
-                  className="agente-pedido"
-                  key={pedido.id}
-                >
-                  <div className="agente-pedido-cabecalho">
-                    <div>
-                      <span className="agente-pedido-label">
-                        SOLICITAÇÃO DE ALUGUEL
-                      </span>
+              {listaFiltrada.map((pedido) => {
+                const analise = analises[pedido.id];
+                const form = formularios[pedido.id] || {};
+                const ocupado = processando !== null;
+                const pendente = pedido.status === "PENDENTE";
+                const temParecer = Boolean(
+                  pedido.parecerFinanceiro
+                );
 
-                      <h3>
-                        {nomeAutomovel(
-                          pedido.automovelId
-                        )}
-                      </h3>
+                return (
+                  <article
+                    className="agente-pedido"
+                    key={pedido.id}
+                  >
+                    <div className="agente-pedido-cabecalho">
+                      <div>
+                        <span className="agente-pedido-label">
+                          SOLICITAÇÃO DE ALUGUEL
+                        </span>
+                        <h3>{nomeCarro(pedido.automovelId)}</h3>
+                        <small>
+                          Pedido #{pedido.id.slice(0, 8).toUpperCase()}
+                        </small>
+                      </div>
 
-                      <small>
-                        Pedido #
-                        {pedido.id
-                          .slice(0, 8)
-                          .toUpperCase()}
-                      </small>
-                    </div>
-
-                    <span
-                      className={`agente-status agente-status-${pedido.status.toLowerCase()}`}
-                    >
-                      {statusTexto[pedido.status] ||
-                        pedido.status}
-                    </span>
-                  </div>
-
-                  <div className="agente-pedido-dados">
-                    <div>
-                      <span>Retirada</span>
-                      <strong>
-                        {formatarData(
-                          pedido.dataInicio
-                        )}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>Devolução</span>
-                      <strong>
-                        {formatarData(
-                          pedido.dataFim
-                        )}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>
-                        Data da solicitação
-                      </span>
-                      <strong>
-                        {pedido.criadoEm
-                          ? new Date(
-                              pedido.criadoEm
-                            ).toLocaleDateString(
-                              "pt-BR"
-                            )
-                          : "Não informada"}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>Valor total</span>
-                      <strong className="agente-valor">
-                        {formatarMoeda(
-                          pedido.valorTotal
-                        )}
-                      </strong>
-                    </div>
-                  </div>
-
-                  {pedido.status === "PENDENTE" && (
-                    <div className="agente-analise-financeira">
-                      <button
-                        type="button"
-                        className="agente-botao-analise"
-                        onClick={() =>
-                          consultarAnalise(
-                            pedido.id
-                          )
-                        }
-                        disabled={
-                          analisandoId === pedido.id
-                        }
+                      <span
+                        className={`agente-status agente-status-${pedido.status.toLowerCase()}`}
                       >
-                        {analisandoId === pedido.id
-                          ? "Consultando..."
-                          : "Consultar análise financeira"}
-                      </button>
-
-                      {analises[pedido.id] && (
-                        <div className="agente-analise-detalhes">
-                          <strong>
-                            Dados financeiros informados
-                            pelo cliente
-                          </strong>
-
-                          <p>
-                            Profissão:{" "}
-                            {analises[pedido.id]
-                              .profissao ||
-                              "Não informada"}
-                          </p>
-
-                          <p>
-                            Renda total informada:{" "}
-                            {formatarMoeda(
-                              analises[pedido.id]
-                                .rendaTotalInformada
-                            )}
-                          </p>
-
-                          <p>
-                            Valor do pedido:{" "}
-                            {formatarMoeda(
-                              analises[pedido.id]
-                                .valorPedido
-                            )}
-                          </p>
-
-                          {analises[pedido.id].empregos.map(
-                            (emprego, indice) => (
-                              <p key={indice}>
-                                {emprego.empresa}:{" "}
-                                {formatarMoeda(
-                                  emprego.rendimento
-                                )}
-                              </p>
-                            )
-                          )}
-
-                          <small>
-                            Dados declarados pelo cliente,
-                            não verificados. A decisão
-                            de aprovação é responsabilidade
-                            do agente.
-                          </small>
-                        </div>
-                      )}
+                        {statusNome[pedido.status] || pedido.status}
+                      </span>
                     </div>
-                  )}
 
-                  <div className="agente-pedido-rodape">
-                    <span className="agente-cliente">
-                      Cliente:{" "}
-                      {pedido.clienteId.slice(
-                        0,
-                        8
-                      )}
-                    </span>
+                    <div className="agente-pedido-dados">
+                      <div>
+                        <span>Retirada</span>
+                        <strong>{dataBR(pedido.dataInicio)}</strong>
+                      </div>
+                      <div>
+                        <span>Devolução</span>
+                        <strong>{dataBR(pedido.dataFim)}</strong>
+                      </div>
+                      <div>
+                        <span>Solicitação</span>
+                        <strong>
+                          {pedido.criadoEm
+                            ? new Date(pedido.criadoEm)
+                                .toLocaleDateString("pt-BR")
+                            : "Não informada"}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Valor total</span>
+                        <strong className="agente-valor">
+                          {moeda(pedido.valorTotal)}
+                        </strong>
+                      </div>
+                    </div>
 
-                    {pedido.status === "PENDENTE" ? (
-                      <div className="agente-acoes">
+                    {pendente && (
+                      <div className="agente-analise-financeira">
                         <button
-                          className="agente-botao-recusar"
-                          disabled={
-                            processando !== null
-                          }
+                          type="button"
+                          className="agente-botao-analise"
                           onClick={() =>
-                            decidirPedido(
-                              pedido.id,
-                              "recusar"
-                            )
+                            consultarAnalise(pedido.id)
                           }
-                        >
-                          Recusar
-                        </button>
-
-                        <button
-                          className="agente-botao-aprovar"
-                          disabled={
-                            processando !== null
-                          }
-                          onClick={() =>
-                            decidirPedido(
-                              pedido.id,
-                              "aprovar"
-                            )
-                          }
+                          disabled={ocupado}
                         >
                           {processando === pedido.id
-                            ? "Processando..."
-                            : "Aprovar pedido"}
+                            ? "Aguarde..."
+                            : "Consultar análise financeira"}
                         </button>
+
+                        {analise && (
+                          <div className="agente-analise-detalhes">
+                            <strong>
+                              Dados financeiros do cliente
+                            </strong>
+
+                            <p>
+                              Profissão:{" "}
+                              {analise.profissao || "Não informada"}
+                            </p>
+
+                            <p>
+                              Renda total informada:{" "}
+                              {moeda(analise.rendaTotalInformada)}
+                            </p>
+
+                            <p>
+                              Valor do pedido:{" "}
+                              {moeda(analise.valorPedido)}
+                            </p>
+
+                            {analise.empregos.map(
+                              (emprego, i) => (
+                                <p key={i}>
+                                  {emprego.empresa}:{" "}
+                                  {moeda(emprego.rendimento)}
+                                </p>
+                              )
+                            )}
+
+                            <small>
+                              Informações declaradas pelo
+                              cliente, não verificadas.
+                            </small>
+                          </div>
+                        )}
+
+                        {temParecer ? (
+                          <div className="agente-parecer-registrado">
+                            <strong>
+                              Parecer financeiro:{" "}
+                              {pedido.parecerFinanceiro === "FAVORAVEL"
+                                ? "Favorável"
+                                : "Desfavorável"}
+                            </strong>
+
+                            <p>
+                              {pedido.justificativaFinanceira}
+                            </p>
+
+                            {pedido.valorCredito != null && (
+                              <p>
+                                Crédito informado:{" "}
+                                {moeda(pedido.valorCredito)}
+                              </p>
+                            )}
+                          </div>
+                        ) : analise ? (
+                          <div className="agente-form-parecer">
+                            <h4>Registrar parecer financeiro</h4>
+
+                            <label>
+                              Resultado da análise
+                              <select
+                                value={form.parecer || ""}
+                                onChange={(e) =>
+                                  atualizarFormulario(
+                                    pedido.id,
+                                    "parecer",
+                                    e.target.value
+                                  )
+                                }
+                              >
+                                <option value="">
+                                  Selecione
+                                </option>
+                                <option value="FAVORAVEL">
+                                  Favorável
+                                </option>
+                                <option value="DESFAVORAVEL">
+                                  Desfavorável
+                                </option>
+                              </select>
+                            </label>
+
+                            <label>
+                              Justificativa
+                              <textarea
+                                rows={3}
+                                maxLength={2000}
+                                placeholder="Descreva o motivo da decisão..."
+                                value={form.justificativa || ""}
+                                onChange={(e) =>
+                                  atualizarFormulario(
+                                    pedido.id,
+                                    "justificativa",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </label>
+
+                            {form.parecer === "FAVORAVEL" && (
+                              <div className="agente-campos-credito">
+                                <p>
+                                  Crédito bancário opcional
+                                </p>
+
+                                <label>
+                                  ID do agente bancário
+                                  <input
+                                    type="text"
+                                    placeholder="UUID do agente"
+                                    value={form.bancoAgenteId || ""}
+                                    onChange={(e) =>
+                                      atualizarFormulario(
+                                        pedido.id,
+                                        "bancoAgenteId",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </label>
+
+                                <label>
+                                  Valor do crédito (R$)
+                                  <input
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    placeholder="0,00"
+                                    value={form.valorCredito || ""}
+                                    onChange={(e) =>
+                                      atualizarFormulario(
+                                        pedido.id,
+                                        "valorCredito",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </label>
+
+                                <small>
+                                  Preencha os dois campos
+                                  somente quando houver crédito.
+                                  O ID deve pertencer a um
+                                  agente ativo cadastrado.
+                                </small>
+                              </div>
+                            )}
+
+                            <button
+                              type="button"
+                              className="agente-botao-salvar-parecer"
+                              disabled={ocupado}
+                              onClick={() =>
+                                registrarParecer(pedido)
+                              }
+                            >
+                              Salvar parecer financeiro
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : (
-                      <span className="agente-finalizado">
-                        Solicitação analisada
-                      </span>
                     )}
-                  </div>
-                </article>
-              ))}
+
+                    <div className="agente-pedido-rodape">
+                      <span className="agente-cliente">
+                        Cliente:{" "}
+                        {pedido.clienteId.slice(0, 8)}
+                      </span>
+
+                      {pendente ? (
+                        <div className="agente-acoes">
+                          <button
+                            className="agente-botao-recusar"
+                            disabled={ocupado}
+                            onClick={() =>
+                              decidirPedido(pedido, "recusar")
+                            }
+                          >
+                            Recusar
+                          </button>
+
+                          <button
+                            className="agente-botao-aprovar"
+                            disabled={
+                              ocupado ||
+                              pedido.parecerFinanceiro !== "FAVORAVEL"
+                            }
+                            onClick={() =>
+                              decidirPedido(pedido, "aprovar")
+                            }
+                          >
+                            Aprovar pedido
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="agente-finalizado">
+                          Solicitação analisada
+                        </span>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

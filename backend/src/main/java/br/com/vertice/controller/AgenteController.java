@@ -31,6 +31,14 @@ public class AgenteController {
         return agenteService.consultarAnaliseFinanceira(id);
     }
 
+    @PostMapping("/pedidos/{id}/parecer-financeiro")
+    public Pedido registrarParecer(
+            @PathVariable UUID id,
+            @RequestBody AgenteService.RegistrarParecerRequest dados
+    ) {
+        return agenteService.registrarParecer(id, dados);
+    }
+
     @PatchMapping("/pedidos/{id}/aprovar")
     public Pedido aprovar(@PathVariable UUID id) {
         return agenteService.aprovar(id);

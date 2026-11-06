@@ -1,6 +1,7 @@
 
 package br.com.vertice.service;
 
+import br.com.vertice.model.Automovel;
 import br.com.vertice.model.Cliente;
 import br.com.vertice.model.Contrato;
 import br.com.vertice.model.Emprego;
@@ -20,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,10 +53,11 @@ public class AgenteService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    @Transactional(readOnly = true)
-    public List<Pedido> listarTodos() {
-        return pedidoRepository.findAll();
-    }
+    public record ModificarPedidoRequest(
+            UUID automovelId,
+            LocalDate dataInicio,
+            LocalDate dataFim
+    ) {}
 
     public record EmpregoFinanceiro(
             String empresa,
@@ -81,6 +85,106 @@ public class AgenteService {
                         HttpStatus.NOT_FOUND,
                         "Pedido não encontrado."
                 ));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Pedido> listarTodos() {
+        return pedidoRepository.findAll();
+    }
+
+    @Transactional
+    public Pedido modificarPedido(
+            UUID pedidoId,
+            ModificarPedidoRequest dados
+    ) {
+        Pedido pedido = buscarPedido(pedidoId);
+
+        if (!"PENDENTE".equals(pedido.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Somente pedidos pendentes podem ser modificados."
+            );
+        }
+
+        if (pedido.getParecerFinanceiro() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "O pedido já possui parecer financeiro e não pode ser modificado."
+            );
+        }
+
+        if (dados == null
+                || dados.automovelId() == null
+                || dados.dataInicio() == null
+                || dados.dataFim() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Informe o automóvel e as datas do aluguel."
+            );
+        }
+
+        LocalDate inicio = dados.dataInicio();
+        LocalDate fim = dados.dataFim();
+
+        if (inicio.isBefore(LocalDate.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A retirada não pode ocorrer no passado."
+            );
+        }
+
+        if (!fim.isAfter(inicio)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A devolução deve ser posterior à retirada."
+            );
+        }
+
+        Automovel automovel = automovelRepository
+                .buscarPorIdComBloqueio(dados.automovelId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Automóvel não encontrado."
+                ));
+
+        if (!automovel.isDisponivel()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "O automóvel selecionado está indisponível."
+            );
+        }
+
+        if (pedidoRepository.existeReservaConflitante(
+                automovel.getId(),
+                inicio,
+                fim
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Já existe uma reserva aprovada para esse período."
+            );
+        }
+
+        if (automovel.getValorDiaria() == null
+                || automovel.getValorDiaria()
+                        .compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "O automóvel não possui uma diária válida."
+            );
+        }
+
+        long dias = ChronoUnit.DAYS.between(inicio, fim);
+
+        BigDecimal valorTotal = automovel.getValorDiaria()
+                .multiply(BigDecimal.valueOf(dias));
+
+        pedido.setAutomovelId(automovel.getId());
+        pedido.setDataInicio(inicio);
+        pedido.setDataFim(fim);
+        pedido.setValorTotal(valorTotal);
+
+        return pedidoRepository.save(pedido);
     }
 
     @Transactional(readOnly = true)
@@ -155,7 +259,8 @@ public class AgenteService {
                 ? ""
                 : dados.justificativa().trim();
 
-        if (justificativa.isBlank() || justificativa.length() > 2000) {
+        if (justificativa.isBlank()
+                || justificativa.length() > 2000) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A justificativa deve ter entre 1 e 2000 caracteres."
@@ -233,7 +338,7 @@ public class AgenteService {
             );
         }
 
-        var automovel = automovelRepository
+        Automovel automovel = automovelRepository
                 .buscarPorIdComBloqueio(pedido.getAutomovelId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,

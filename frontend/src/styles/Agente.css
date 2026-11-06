@@ -667,3 +667,78 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   EDIÇÃO DE PEDIDOS PELO AGENTE
+   ========================================================= */
+
+.agente-edicao {
+  margin-top: 20px;
+}
+
+.agente-form-edicao {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 24px;
+  background: #f5f2e9;
+  border: 1px solid #d8d0bf;
+  border-radius: 12px;
+}
+
+.agente-form-edicao h4 {
+  margin: 0;
+  color: #242424;
+  font-size: 18px;
+}
+
+.agente-form-edicao label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #343434;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.agente-form-edicao input,
+.agente-form-edicao select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #c9c3b7;
+  border-radius: 8px;
+  background: #fff;
+  color: #242424;
+}
+
+.agente-form-edicao input:focus,
+.agente-form-edicao select:focus {
+  outline: 2px solid #a58c61;
+  outline-offset: 2px;
+}
+
+.agente-previa-valor {
+  margin: 0;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #d8d0bf;
+  border-radius: 8px;
+}
+
+.agente-form-edicao .agente-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .agente-form-edicao {
+    padding: 16px;
+  }
+
+  .agente-form-edicao .agente-acoes button {
+    width: 100%;
+  }
+}

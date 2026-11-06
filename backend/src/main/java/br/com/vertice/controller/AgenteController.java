@@ -24,6 +24,14 @@ public class AgenteController {
         return agenteService.listarTodos();
     }
 
+    @PutMapping("/pedidos/{id}")
+    public Pedido modificarPedido(
+            @PathVariable UUID id,
+            @RequestBody AgenteService.ModificarPedidoRequest dados
+    ) {
+        return agenteService.modificarPedido(id, dados);
+    }
+
     @GetMapping("/pedidos/{id}/analise-financeira")
     public AgenteService.AnaliseFinanceira consultarAnaliseFinanceira(
             @PathVariable UUID id

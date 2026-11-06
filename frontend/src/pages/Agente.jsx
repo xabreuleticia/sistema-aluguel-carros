@@ -40,6 +40,8 @@ export default function Agente() {
   const [bancos, setBancos] = useState([]);
   const [analises, setAnalises] = useState({});
   const [formularios, setFormularios] = useState({});
+  const [edicoes, setEdicoes] = useState({});
+  const [editandoId, setEditandoId] = useState(null);
   const [filtro, setFiltro] = useState("TODOS");
   const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
@@ -65,23 +67,13 @@ export default function Agente() {
         }),
       ]);
 
-      if (!rp.ok) {
-        throw new Error(await mensagemErro(rp));
-      }
-
-      if (!rb.ok) {
-        throw new Error(
-          "Não foi possível carregar a lista de bancos: " +
-          (await mensagemErro(rb))
-        );
-      }
+      if (!rp.ok) throw new Error(await mensagemErro(rp));
+      if (!ra.ok) throw new Error(await mensagemErro(ra));
+      if (!rb.ok) throw new Error(await mensagemErro(rb));
 
       setPedidos(await rp.json());
+      setAutomoveis(await ra.json());
       setBancos(await rb.json());
-
-      if (ra.ok) {
-        setAutomoveis(await ra.json());
-      }
     } catch (e) {
       setErro(e.message);
     } finally {
@@ -101,6 +93,36 @@ export default function Agente() {
         [campo]: valor,
       },
     }));
+  }
+
+  function atualizarEdicao(id, campo, valor) {
+    setEdicoes((atual) => ({
+      ...atual,
+      [id]: {
+        ...atual[id],
+        [campo]: valor,
+      },
+    }));
+  }
+
+  function iniciarEdicao(pedido) {
+    setErro("");
+    setMensagem("");
+    setEditandoId(pedido.id);
+
+    setEdicoes((atual) => ({
+      ...atual,
+      [pedido.id]: {
+        automovelId: pedido.automovelId,
+        dataInicio: pedido.dataInicio,
+        dataFim: pedido.dataFim,
+      },
+    }));
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null);
+    setErro("");
   }
 
   async function obterCsrf() {
@@ -133,6 +155,100 @@ export default function Agente() {
     }
 
     return resposta.json();
+  }
+
+  function atualizarPedidoNaLista(atualizado) {
+    setPedidos((lista) =>
+      lista.map((item) =>
+        item.id === atualizado.id ? atualizado : item
+      )
+    );
+  }
+
+  function calcularPrevia(edicao) {
+    if (
+      !edicao?.automovelId ||
+      !edicao?.dataInicio ||
+      !edicao?.dataFim
+    ) {
+      return null;
+    }
+
+    const carro = automoveis.find(
+      (a) => a.id === edicao.automovelId
+    );
+
+    if (!carro || carro.valorDiaria == null) return null;
+
+    const inicio = new Date(`${edicao.dataInicio}T12:00:00`);
+    const fim = new Date(`${edicao.dataFim}T12:00:00`);
+
+    const dias = Math.round(
+      (fim.getTime() - inicio.getTime()) / 86400000
+    );
+
+    if (!Number.isFinite(dias) || dias <= 0) return null;
+
+    return {
+      dias,
+      total: dias * Number(carro.valorDiaria),
+    };
+  }
+
+  async function salvarEdicao(pedido) {
+    const dados = edicoes[pedido.id];
+
+    setErro("");
+    setMensagem("");
+
+    if (
+      !dados?.automovelId ||
+      !dados?.dataInicio ||
+      !dados?.dataFim
+    ) {
+      setErro("Preencha o automóvel e as duas datas.");
+      return;
+    }
+
+    if (dados.dataFim <= dados.dataInicio) {
+      setErro("A devolução deve ser posterior à retirada.");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        "Deseja salvar as alterações deste pedido?"
+      )
+    ) {
+      return;
+    }
+
+    setProcessando(pedido.id);
+
+    try {
+      const atualizado = await requisicaoSegura(
+        `/api/agente/pedidos/${pedido.id}`,
+        "PUT",
+        dados
+      );
+
+      atualizarPedidoNaLista(atualizado);
+      setEditandoId(null);
+
+      setAnalises((atual) => {
+        const copia = { ...atual };
+        delete copia[pedido.id];
+        return copia;
+      });
+
+      setMensagem(
+        "Pedido modificado com sucesso. O valor foi recalculado."
+      );
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setProcessando(null);
+    }
   }
 
   async function consultarAnalise(id) {
@@ -194,7 +310,7 @@ export default function Agente() {
       (valorCredito !== null)
     ) {
       setErro(
-        "Selecione um banco e informe o valor do crédito, ou deixe ambos vazios."
+        "Selecione um banco e informe o crédito, ou deixe ambos vazios."
       );
       return;
     }
@@ -206,16 +322,16 @@ export default function Agente() {
         valorCredito > Number(pedido.valorTotal))
     ) {
       setErro(
-        "O crédito deve ser positivo e não pode superar o valor do pedido."
+        "O crédito deve ser positivo e não superar o valor do pedido."
       );
       return;
     }
 
     if (
       bancoAgenteId &&
-      !bancos.some((banco) => banco.id === bancoAgenteId)
+      !bancos.some((b) => b.id === bancoAgenteId)
     ) {
-      setErro("Selecione um banco válido da lista.");
+      setErro("Selecione um banco válido.");
       return;
     }
 
@@ -233,12 +349,7 @@ export default function Agente() {
         }
       );
 
-      setPedidos((lista) =>
-        lista.map((item) =>
-          item.id === pedido.id ? atualizado : item
-        )
-      );
-
+      atualizarPedidoNaLista(atualizado);
       setMensagem("Parecer financeiro registrado com sucesso.");
     } catch (e) {
       setErro(e.message);
@@ -253,7 +364,7 @@ export default function Agente() {
       pedido.parecerFinanceiro !== "FAVORAVEL"
     ) {
       setErro(
-        "Registre um parecer financeiro favorável antes de aprovar."
+        "Registre um parecer favorável antes de aprovar."
       );
       return;
     }
@@ -272,11 +383,7 @@ export default function Agente() {
         "PATCH"
       );
 
-      setPedidos((lista) =>
-        lista.map((item) =>
-          item.id === pedido.id ? atualizado : item
-        )
-      );
+      atualizarPedidoNaLista(atualizado);
 
       setMensagem(
         acao === "aprovar"
@@ -304,10 +411,7 @@ export default function Agente() {
 
   const listaFiltrada = pedidos
     .filter((pedido) => {
-      if (
-        filtro !== "TODOS" &&
-        pedido.status !== filtro
-      ) {
+      if (filtro !== "TODOS" && pedido.status !== filtro) {
         return false;
       }
 
@@ -337,8 +441,10 @@ export default function Agente() {
         return 1;
       }
 
-      return new Date(b.criadoEm || 0) -
-        new Date(a.criadoEm || 0);
+      return (
+        new Date(b.criadoEm || 0) -
+        new Date(a.criadoEm || 0)
+      );
     });
 
   function nomeCarro(id) {
@@ -349,8 +455,10 @@ export default function Agente() {
   }
 
   function nomeBanco(id) {
-    return bancos.find((b) => b.id === id)?.nome ||
-      "Banco não encontrado na lista de ativos";
+    return (
+      bancos.find((b) => b.id === id)?.nome ||
+      "Banco não encontrado na lista de ativos"
+    );
   }
 
   return (
@@ -361,12 +469,10 @@ export default function Agente() {
             <span className="agente-etiqueta">
               VÉRTICE / GESTÃO DE ALUGUÉIS
             </span>
-
             <h1>Painel do Agente</h1>
-
             <p>
-              Analise solicitações, registre pareceres
-              financeiros e gerencie contratos.
+              Analise solicitações, modifique pedidos e
+              gerencie contratos.
             </p>
           </div>
 
@@ -381,10 +487,26 @@ export default function Agente() {
 
         <section className="agente-indicadores">
           {[
-            ["Total de solicitações", pedidos.length, "Pedidos registrados"],
-            ["Aguardando análise", pendentes, "Pedidos pendentes"],
-            ["Pedidos aprovados", aprovados, "Reservas autorizadas"],
-            ["Pedidos recusados", recusados, "Solicitações encerradas"],
+            [
+              "Total de solicitações",
+              pedidos.length,
+              "Pedidos registrados",
+            ],
+            [
+              "Aguardando análise",
+              pendentes,
+              "Pedidos pendentes",
+            ],
+            [
+              "Pedidos aprovados",
+              aprovados,
+              "Reservas autorizadas",
+            ],
+            [
+              "Pedidos recusados",
+              recusados,
+              "Solicitações encerradas",
+            ],
           ].map(([titulo, quantidade, subtitulo]) => (
             <article className="agente-indicador" key={titulo}>
               <span>{titulo}</span>
@@ -399,12 +521,10 @@ export default function Agente() {
             <span className="agente-etiqueta">
               CENTRAL DE SOLICITAÇÕES
             </span>
-
             <h2>Pedidos de aluguel</h2>
-
             <p>
-              Consulte os dados financeiros, registre
-              o parecer e decida sobre o pedido.
+              Modifique pedidos pendentes, consulte os dados
+              financeiros e registre decisões.
             </p>
           </div>
 
@@ -461,11 +581,14 @@ export default function Agente() {
               {listaFiltrada.map((pedido) => {
                 const analise = analises[pedido.id];
                 const form = formularios[pedido.id] || {};
+                const edicao = edicoes[pedido.id] || {};
+                const previa = calcularPrevia(edicao);
                 const ocupado = processando !== null;
                 const pendente = pedido.status === "PENDENTE";
                 const temParecer = Boolean(
                   pedido.parecerFinanceiro
                 );
+                const editando = editandoId === pedido.id;
 
                 return (
                   <article
@@ -477,38 +600,43 @@ export default function Agente() {
                         <span className="agente-pedido-label">
                           SOLICITAÇÃO DE ALUGUEL
                         </span>
-
                         <h3>{nomeCarro(pedido.automovelId)}</h3>
-
                         <small>
-                          Pedido #{pedido.id.slice(0, 8).toUpperCase()}
+                          Pedido #
+                          {pedido.id.slice(0, 8).toUpperCase()}
                         </small>
                       </div>
 
                       <span
                         className={`agente-status agente-status-${pedido.status.toLowerCase()}`}
                       >
-                        {statusNome[pedido.status] || pedido.status}
+                        {statusNome[pedido.status] ||
+                          pedido.status}
                       </span>
                     </div>
 
                     <div className="agente-pedido-dados">
                       <div>
                         <span>Retirada</span>
-                        <strong>{dataBR(pedido.dataInicio)}</strong>
+                        <strong>
+                          {dataBR(pedido.dataInicio)}
+                        </strong>
                       </div>
 
                       <div>
                         <span>Devolução</span>
-                        <strong>{dataBR(pedido.dataFim)}</strong>
+                        <strong>
+                          {dataBR(pedido.dataFim)}
+                        </strong>
                       </div>
 
                       <div>
                         <span>Solicitação</span>
                         <strong>
                           {pedido.criadoEm
-                            ? new Date(pedido.criadoEm)
-                                .toLocaleDateString("pt-BR")
+                            ? new Date(
+                                pedido.criadoEm
+                              ).toLocaleDateString("pt-BR")
                             : "Não informada"}
                         </strong>
                       </div>
@@ -521,7 +649,137 @@ export default function Agente() {
                       </div>
                     </div>
 
-                    {pendente && (
+                    {pendente && !temParecer && (
+                      <div className="agente-edicao">
+                        {!editando ? (
+                          <button
+                            type="button"
+                            className="agente-botao-analise"
+                            disabled={
+                              ocupado ||
+                              (editandoId !== null &&
+                                editandoId !== pedido.id)
+                            }
+                            onClick={() => iniciarEdicao(pedido)}
+                          >
+                            Modificar pedido
+                          </button>
+                        ) : (
+                          <div className="agente-form-edicao">
+                            <h4>Modificar solicitação</h4>
+
+                            <label>
+                              Automóvel
+                              <select
+                                value={edicao.automovelId || ""}
+                                onChange={(e) =>
+                                  atualizarEdicao(
+                                    pedido.id,
+                                    "automovelId",
+                                    e.target.value
+                                  )
+                                }
+                              >
+                                <option value="">
+                                  Selecione um automóvel
+                                </option>
+                                {automoveis
+                                  .filter(
+                                    (a) =>
+                                      a.disponivel ||
+                                      a.id === pedido.automovelId
+                                  )
+                                  .map((carro) => (
+                                    <option
+                                      key={carro.id}
+                                      value={carro.id}
+                                    >
+                                      {carro.marca} {carro.modelo}
+                                      {" — "}
+                                      {carro.placa}
+                                    </option>
+                                  ))}
+                              </select>
+                            </label>
+
+                            <label>
+                              Data de retirada
+                              <input
+                                type="date"
+                                min={new Date()
+                                  .toLocaleDateString("en-CA")}
+                                value={edicao.dataInicio || ""}
+                                onChange={(e) =>
+                                  atualizarEdicao(
+                                    pedido.id,
+                                    "dataInicio",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </label>
+
+                            <label>
+                              Data de devolução
+                              <input
+                                type="date"
+                                min={edicao.dataInicio || ""}
+                                value={edicao.dataFim || ""}
+                                onChange={(e) =>
+                                  atualizarEdicao(
+                                    pedido.id,
+                                    "dataFim",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            </label>
+
+                            {previa && (
+                              <p className="agente-previa-valor">
+                                Novo valor estimado:{" "}
+                                <strong>
+                                  {moeda(previa.total)}
+                                </strong>
+                                {" — "}
+                                {previa.dias} diária(s)
+                              </p>
+                            )}
+
+                            <small>
+                              A disponibilidade definitiva será
+                              verificada ao salvar.
+                            </small>
+
+                            <div className="agente-acoes">
+                              <button
+                                type="button"
+                                className="agente-botao-recusar"
+                                disabled={ocupado}
+                                onClick={cancelarEdicao}
+                              >
+                                Cancelar edição
+                              </button>
+
+                              <button
+                                type="button"
+                                className="agente-botao-aprovar"
+                                disabled={ocupado}
+                                onClick={() =>
+                                  salvarEdicao(pedido)
+                                }
+                              >
+                                {processando === pedido.id
+                                  ? "Salvando..."
+                                  : "Salvar alterações"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {pendente && !editando && (
                       <div className="agente-analise-financeira">
                         <button
                           type="button"
@@ -538,16 +796,21 @@ export default function Agente() {
 
                         {analise && (
                           <div className="agente-analise-detalhes">
-                            <strong>Dados financeiros do cliente</strong>
+                            <strong>
+                              Dados financeiros do cliente
+                            </strong>
 
                             <p>
                               Profissão:{" "}
-                              {analise.profissao || "Não informada"}
+                              {analise.profissao ||
+                                "Não informada"}
                             </p>
 
                             <p>
                               Renda total informada:{" "}
-                              {moeda(analise.rendaTotalInformada)}
+                              {moeda(
+                                analise.rendaTotalInformada
+                              )}
                             </p>
 
                             <p>
@@ -555,16 +818,18 @@ export default function Agente() {
                               {moeda(analise.valorPedido)}
                             </p>
 
-                            {analise.empregos.map((emprego, i) => (
-                              <p key={i}>
-                                {emprego.empresa}:{" "}
-                                {moeda(emprego.rendimento)}
-                              </p>
-                            ))}
+                            {(analise.empregos || []).map(
+                              (emprego, i) => (
+                                <p key={i}>
+                                  {emprego.empresa}:{" "}
+                                  {moeda(emprego.rendimento)}
+                                </p>
+                              )
+                            )}
 
                             <small>
-                              Informações declaradas pelo cliente,
-                              não verificadas.
+                              Informações declaradas pelo
+                              cliente, não verificadas.
                             </small>
                           </div>
                         )}
@@ -573,16 +838,22 @@ export default function Agente() {
                           <div className="agente-parecer-registrado">
                             <strong>
                               Parecer financeiro:{" "}
-                              {pedido.parecerFinanceiro === "FAVORAVEL"
+                              {pedido.parecerFinanceiro ===
+                              "FAVORAVEL"
                                 ? "Favorável"
                                 : "Desfavorável"}
                             </strong>
 
-                            <p>{pedido.justificativaFinanceira}</p>
+                            <p>
+                              {pedido.justificativaFinanceira}
+                            </p>
 
                             {pedido.bancoAgenteId && (
                               <p>
-                                Banco: {nomeBanco(pedido.bancoAgenteId)}
+                                Banco:{" "}
+                                {nomeBanco(
+                                  pedido.bancoAgenteId
+                                )}
                               </p>
                             )}
 
@@ -595,7 +866,9 @@ export default function Agente() {
                           </div>
                         ) : analise ? (
                           <div className="agente-form-parecer">
-                            <h4>Registrar parecer financeiro</h4>
+                            <h4>
+                              Registrar parecer financeiro
+                            </h4>
 
                             <label>
                               Resultado da análise
@@ -609,7 +882,9 @@ export default function Agente() {
                                   )
                                 }
                               >
-                                <option value="">Selecione</option>
+                                <option value="">
+                                  Selecione
+                                </option>
                                 <option value="FAVORAVEL">
                                   Favorável
                                 </option>
@@ -625,7 +900,9 @@ export default function Agente() {
                                 rows={3}
                                 maxLength={2000}
                                 placeholder="Descreva o motivo da decisão..."
-                                value={form.justificativa || ""}
+                                value={
+                                  form.justificativa || ""
+                                }
                                 onChange={(e) =>
                                   atualizarFormulario(
                                     pedido.id,
@@ -638,12 +915,16 @@ export default function Agente() {
 
                             {form.parecer === "FAVORAVEL" && (
                               <div className="agente-campos-credito">
-                                <p>Crédito bancário opcional</p>
+                                <p>
+                                  Crédito bancário opcional
+                                </p>
 
                                 <label>
                                   Banco responsável
                                   <select
-                                    value={form.bancoAgenteId || ""}
+                                    value={
+                                      form.bancoAgenteId || ""
+                                    }
                                     onChange={(e) =>
                                       atualizarFormulario(
                                         pedido.id,
@@ -669,9 +950,8 @@ export default function Agente() {
 
                                 {bancos.length === 0 && (
                                   <small>
-                                    Nenhum banco ativo cadastrado.
-                                    Cadastre ou classifique um agente
-                                    como banco no Supabase.
+                                    Nenhum banco ativo
+                                    cadastrado.
                                   </small>
                                 )}
 
@@ -683,7 +963,9 @@ export default function Agente() {
                                     max={pedido.valorTotal}
                                     step="0.01"
                                     placeholder="0.00"
-                                    value={form.valorCredito || ""}
+                                    value={
+                                      form.valorCredito || ""
+                                    }
                                     onChange={(e) =>
                                       atualizarFormulario(
                                         pedido.id,
@@ -695,10 +977,8 @@ export default function Agente() {
                                 </label>
 
                                 <small>
-                                  Para conceder crédito, selecione
-                                  um banco e informe o valor.
-                                  Para aluguel sem financiamento,
-                                  deixe o banco e o valor vazios.
+                                  Selecione um banco e informe
+                                  o valor, ou deixe ambos vazios.
                                 </small>
                               </div>
                             )}
@@ -720,14 +1000,15 @@ export default function Agente() {
 
                     <div className="agente-pedido-rodape">
                       <span className="agente-cliente">
-                        Cliente: {pedido.clienteId.slice(0, 8)}
+                        Cliente:{" "}
+                        {pedido.clienteId.slice(0, 8)}
                       </span>
 
                       {pendente ? (
                         <div className="agente-acoes">
                           <button
                             className="agente-botao-recusar"
-                            disabled={ocupado}
+                            disabled={ocupado || editando}
                             onClick={() =>
                               decidirPedido(pedido, "recusar")
                             }
@@ -739,7 +1020,9 @@ export default function Agente() {
                             className="agente-botao-aprovar"
                             disabled={
                               ocupado ||
-                              pedido.parecerFinanceiro !== "FAVORAVEL"
+                              editando ||
+                              pedido.parecerFinanceiro !==
+                                "FAVORAVEL"
                             }
                             onClick={() =>
                               decidirPedido(pedido, "aprovar")

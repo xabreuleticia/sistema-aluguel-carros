@@ -2,6 +2,7 @@
 package br.com.vertice.repository;
 
 import br.com.vertice.model.Usuario;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -18,5 +19,9 @@ public interface UsuarioRepository
     List<Usuario> findByPerfilAndTipoAgenteAndAtivoTrueOrderByNomeAsc(
             String perfil,
             String tipoAgente
+    );
+
+    long countByPerfilAndAtivoTrue(
+            String perfil
     );
 }

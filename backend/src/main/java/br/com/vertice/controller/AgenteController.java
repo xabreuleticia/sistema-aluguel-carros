@@ -24,6 +24,13 @@ public class AgenteController {
         return agenteService.listarTodos();
     }
 
+    @GetMapping("/pedidos/{id}/analise-financeira")
+    public AgenteService.AnaliseFinanceira consultarAnaliseFinanceira(
+            @PathVariable UUID id
+    ) {
+        return agenteService.consultarAnaliseFinanceira(id);
+    }
+
     @PatchMapping("/pedidos/{id}/aprovar")
     public Pedido aprovar(@PathVariable UUID id) {
         return agenteService.aprovar(id);

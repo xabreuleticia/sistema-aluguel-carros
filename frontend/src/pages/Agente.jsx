@@ -10,7 +10,6 @@ const formatarMoeda = (valor) =>
 
 const formatarData = (data) => {
   if (!data) return "Não informada";
-
   const [ano, mes, dia] = data.substring(0, 10).split("-");
   return `${dia}/${mes}/${ano}`;
 };
@@ -100,8 +99,10 @@ export default function Agente() {
   const [processando, setProcessando] = useState(null);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const [analises, setAnalises] = useState({});
+  const [analisandoId, setAnalisandoId] = useState(null);
   const alertaErroRef = useRef(null);
-  
+
   useEffect(() => {
     if (erro && alertaErroRef.current) {
       alertaErroRef.current.scrollIntoView({
@@ -110,7 +111,6 @@ export default function Agente() {
       });
     }
   }, [erro]);
-
 
   async function carregarDados() {
     setCarregando(true);
@@ -169,8 +169,46 @@ export default function Agente() {
     return resposta.json();
   }
 
+  async function consultarAnalise(id) {
+    setAnalisandoId(id);
+    setErro("");
+
+    try {
+      const resposta = await fetch(
+        `/api/agente/pedidos/${id}/analise-financeira`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!resposta.ok) {
+        throw new Error(
+          "Não foi possível consultar os dados financeiros do cliente."
+        );
+      }
+
+      const dados = await resposta.json();
+
+      setAnalises((anteriores) => ({
+        ...anteriores,
+        [id]: dados,
+      }));
+    } catch (error) {
+      setErro(error.message);
+    } finally {
+      setAnalisandoId(null);
+    }
+  }
+
   async function decidirPedido(id, decisao) {
     const acao = decisao === "aprovar" ? "aprovar" : "recusar";
+
+    if (acao === "aprovar" && !analises[id]) {
+      setErro(
+        "Consulte primeiro os dados financeiros do cliente antes de aprovar."
+      );
+      return;
+    }
 
     const confirmado = window.confirm(
       `Deseja realmente ${acao} esta solicitação?`
@@ -240,7 +278,7 @@ export default function Agente() {
   const quantidadeRecusados = pedidos.filter(
     (pedido) => pedido.status === "RECUSADO"
   ).length;
-  
+
   const pedidosFiltrados = pedidos
     .filter((pedido) => {
       const correspondeStatus =
@@ -267,16 +305,20 @@ export default function Agente() {
       );
     })
     .sort((a, b) => {
-      // Pedidos pendentes sempre aparecem primeiro.
-      if (a.status === "PENDENTE" && b.status !== "PENDENTE") {
+      if (
+        a.status === "PENDENTE" &&
+        b.status !== "PENDENTE"
+      ) {
         return -1;
       }
 
-      if (a.status !== "PENDENTE" && b.status === "PENDENTE") {
+      if (
+        a.status !== "PENDENTE" &&
+        b.status === "PENDENTE"
+      ) {
         return 1;
       }
 
-      // Dentro de cada grupo, os mais recentes aparecem primeiro.
       const dataA = a.criadoEm
         ? new Date(a.criadoEm).getTime()
         : 0;
@@ -289,7 +331,9 @@ export default function Agente() {
     });
 
   function nomeAutomovel(id) {
-    const carro = automoveis.find((item) => item.id === id);
+    const carro = automoveis.find(
+      (item) => item.id === id
+    );
 
     return carro
       ? `${carro.marca} ${carro.modelo}`
@@ -316,7 +360,9 @@ export default function Agente() {
           <button
             className="agente-atualizar"
             onClick={carregarDados}
-            disabled={carregando || processando !== null}
+            disabled={
+              carregando || processando !== null
+            }
           >
             Atualizar pedidos
           </button>
@@ -368,19 +414,31 @@ export default function Agente() {
               type="search"
               placeholder="Buscar veículo, placa ou pedido..."
               value={busca}
-              onChange={(event) => setBusca(event.target.value)}
+              onChange={(event) =>
+                setBusca(event.target.value)
+              }
               aria-label="Buscar pedidos"
             />
 
             <select
               value={filtro}
-              onChange={(event) => setFiltro(event.target.value)}
+              onChange={(event) =>
+                setFiltro(event.target.value)
+              }
               aria-label="Filtrar pedidos"
             >
-              <option value="TODOS">Todos os pedidos</option>
-              <option value="PENDENTE">Pendentes</option>
-              <option value="APROVADO">Aprovados</option>
-              <option value="RECUSADO">Recusados</option>
+              <option value="TODOS">
+                Todos os pedidos
+              </option>
+              <option value="PENDENTE">
+                Pendentes
+              </option>
+              <option value="APROVADO">
+                Aprovados
+              </option>
+              <option value="RECUSADO">
+                Recusados
+              </option>
             </select>
           </div>
 
@@ -391,11 +449,12 @@ export default function Agente() {
               role="alert"
               style={{ scrollMarginTop: "110px" }}
             >
-              <strong>Não foi possível concluir a operação.</strong>
+              <strong>
+                Não foi possível concluir a operação.
+              </strong>
               <span>{erro}</span>
             </div>
           )}
-
 
           {mensagem && (
             <div
@@ -415,8 +474,8 @@ export default function Agente() {
             <div className="agente-vazio">
               <h3>Nenhuma solicitação encontrada</h3>
               <p>
-                Não existem pedidos correspondentes aos filtros
-                selecionados.
+                Não existem pedidos correspondentes
+                aos filtros selecionados.
               </p>
             </div>
           ) : (
@@ -433,12 +492,16 @@ export default function Agente() {
                       </span>
 
                       <h3>
-                        {nomeAutomovel(pedido.automovelId)}
+                        {nomeAutomovel(
+                          pedido.automovelId
+                        )}
                       </h3>
 
                       <small>
                         Pedido #
-                        {pedido.id.slice(0, 8).toUpperCase()}
+                        {pedido.id
+                          .slice(0, 8)
+                          .toUpperCase()}
                       </small>
                     </div>
 
@@ -454,24 +517,32 @@ export default function Agente() {
                     <div>
                       <span>Retirada</span>
                       <strong>
-                        {formatarData(pedido.dataInicio)}
+                        {formatarData(
+                          pedido.dataInicio
+                        )}
                       </strong>
                     </div>
 
                     <div>
                       <span>Devolução</span>
                       <strong>
-                        {formatarData(pedido.dataFim)}
+                        {formatarData(
+                          pedido.dataFim
+                        )}
                       </strong>
                     </div>
 
                     <div>
-                      <span>Data da solicitação</span>
+                      <span>
+                        Data da solicitação
+                      </span>
                       <strong>
                         {pedido.criadoEm
                           ? new Date(
                               pedido.criadoEm
-                            ).toLocaleDateString("pt-BR")
+                            ).toLocaleDateString(
+                              "pt-BR"
+                            )
                           : "Não informada"}
                       </strong>
                     </div>
@@ -479,21 +550,100 @@ export default function Agente() {
                     <div>
                       <span>Valor total</span>
                       <strong className="agente-valor">
-                        {formatarMoeda(pedido.valorTotal)}
+                        {formatarMoeda(
+                          pedido.valorTotal
+                        )}
                       </strong>
                     </div>
                   </div>
 
+                  {pedido.status === "PENDENTE" && (
+                    <div className="agente-analise-financeira">
+                      <button
+                        type="button"
+                        className="agente-botao-analise"
+                        onClick={() =>
+                          consultarAnalise(
+                            pedido.id
+                          )
+                        }
+                        disabled={
+                          analisandoId === pedido.id
+                        }
+                      >
+                        {analisandoId === pedido.id
+                          ? "Consultando..."
+                          : "Consultar análise financeira"}
+                      </button>
+
+                      {analises[pedido.id] && (
+                        <div className="agente-analise-detalhes">
+                          <strong>
+                            Dados financeiros informados
+                            pelo cliente
+                          </strong>
+
+                          <p>
+                            Profissão:{" "}
+                            {analises[pedido.id]
+                              .profissao ||
+                              "Não informada"}
+                          </p>
+
+                          <p>
+                            Renda total informada:{" "}
+                            {formatarMoeda(
+                              analises[pedido.id]
+                                .rendaTotalInformada
+                            )}
+                          </p>
+
+                          <p>
+                            Valor do pedido:{" "}
+                            {formatarMoeda(
+                              analises[pedido.id]
+                                .valorPedido
+                            )}
+                          </p>
+
+                          {analises[pedido.id].empregos.map(
+                            (emprego, indice) => (
+                              <p key={indice}>
+                                {emprego.empresa}:{" "}
+                                {formatarMoeda(
+                                  emprego.rendimento
+                                )}
+                              </p>
+                            )
+                          )}
+
+                          <small>
+                            Dados declarados pelo cliente,
+                            não verificados. A decisão
+                            de aprovação é responsabilidade
+                            do agente.
+                          </small>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="agente-pedido-rodape">
                     <span className="agente-cliente">
-                      Cliente: {pedido.clienteId.slice(0, 8)}
+                      Cliente:{" "}
+                      {pedido.clienteId.slice(
+                        0,
+                        8
+                      )}
                     </span>
 
                     {pedido.status === "PENDENTE" ? (
                       <div className="agente-acoes">
                         <button
                           className="agente-botao-recusar"
-                          disabled={processando !== null}
+                          disabled={
+                            processando !== null
+                          }
                           onClick={() =>
                             decidirPedido(
                               pedido.id,
@@ -506,7 +656,9 @@ export default function Agente() {
 
                         <button
                           className="agente-botao-aprovar"
-                          disabled={processando !== null}
+                          disabled={
+                            processando !== null
+                          }
                           onClick={() =>
                             decidirPedido(
                               pedido.id,

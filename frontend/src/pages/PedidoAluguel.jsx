@@ -1,7 +1,13 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+} from "lucide-react";
 import { obterCsrf } from "../service/auth";
 import "../styles/PedidoAluguel.css";
 
@@ -35,6 +41,16 @@ const ordemAntiga = [
   "Chevrolet|Onix",
 ];
 
+const diasSemana = [
+  "Dom",
+  "Seg",
+  "Ter",
+  "Qua",
+  "Qui",
+  "Sex",
+  "Sáb",
+];
+
 const formatarMoeda = (valor) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -58,10 +74,77 @@ function calcularDias(inicio, fim) {
   return Math.round((dataFim - dataInicio) / 86400000);
 }
 
+function mesInicial() {
+  const hoje = new Date();
+
+  return new Date(
+    hoje.getFullYear(),
+    hoje.getMonth(),
+    1
+  );
+}
+
+function gerarDiasMes(mes) {
+  const ano = mes.getFullYear();
+  const numeroMes = mes.getMonth();
+
+  const primeiroDia = new Date(ano, numeroMes, 1);
+  const quantidade = new Date(
+    ano,
+    numeroMes + 1,
+    0
+  ).getDate();
+
+  const dias = [];
+
+  for (let i = 0; i < primeiroDia.getDay(); i++) {
+    dias.push(null);
+  }
+
+  for (let dia = 1; dia <= quantidade; dia++) {
+    dias.push(
+      dataLocalISO(new Date(ano, numeroMes, dia))
+    );
+  }
+
+  return dias;
+}
+
+function dataOcupada(data, periodos) {
+  return periodos.some(
+    (periodo) =>
+      data >= periodo.dataInicio &&
+      data < periodo.dataFim
+  );
+}
+
+function periodoConflitante(inicio, fim, periodos) {
+  if (!inicio || !fim || fim <= inicio) return false;
+
+  return periodos.some(
+    (periodo) =>
+      inicio < periodo.dataFim &&
+      fim > periodo.dataInicio
+  );
+}
+
+function formatarMes(mes) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(mes);
+}
+
 async function mensagemErro(resposta, padrao) {
   try {
     const dados = await resposta.json();
-    return dados.detail || dados.mensagem || dados.message || padrao;
+
+    return (
+      dados.detail ||
+      dados.mensagem ||
+      dados.message ||
+      padrao
+    );
   } catch {
     return padrao;
   }
@@ -86,12 +169,28 @@ export default function PedidoAluguel() {
   const [observacoes, setObservacoes] = useState("");
 
   const [erro, setErro] = useState("");
-  const [disponibilidade, setDisponibilidade] = useState("inicial");
-  const [erroDisponibilidade, setErroDisponibilidade] = useState("");
-  const [consultaConfirmada, setConsultaConfirmada] = useState("");
+
+  const [disponibilidade, setDisponibilidade] =
+    useState("inicial");
+
+  const [erroDisponibilidade, setErroDisponibilidade] =
+    useState("");
+
+  const [consultaConfirmada, setConsultaConfirmada] =
+    useState("");
+
+  // ESTADOS DO CALENDÁRIO
+  const [mesAtual, setMesAtual] = useState(mesInicial);
+  const [periodosOcupados, setPeriodosOcupados] = useState([]);
+  const [carregandoPeriodos, setCarregandoPeriodos] =
+    useState(false);
+  const [erroPeriodos, setErroPeriodos] = useState("");
+  const [carroPeriodosCarregado, setCarroPeriodosCarregado] =
+    useState("");
 
   const hoje = dataLocalISO(new Date());
 
+  // CARREGAMENTO DOS AUTOMÓVEIS E DO PEDIDO
   useEffect(() => {
     let ativo = true;
 
@@ -100,18 +199,23 @@ export default function PedidoAluguel() {
       setErro("");
 
       try {
-        const respostaCarros = await fetch("/api/automoveis", {
-          credentials: "include",
-        });
+        const respostaCarros = await fetch(
+          "/api/automoveis",
+          { credentials: "include" }
+        );
 
         if (!respostaCarros.ok) {
-          throw new Error("Não foi possível carregar os automóveis.");
+          throw new Error(
+            "Não foi possível carregar os automóveis."
+          );
         }
 
         const dadosCarros = await respostaCarros.json();
 
         if (!Array.isArray(dadosCarros)) {
-          throw new Error("A lista de automóveis é inválida.");
+          throw new Error(
+            "A lista de automóveis é inválida."
+          );
         }
 
         if (!ativo) return;
@@ -144,25 +248,45 @@ export default function PedidoAluguel() {
           if (!ativo) return;
 
           setCarroId(pedido.automovelId);
-          setRetirada(pedido.dataInicio?.substring(0, 10) || "");
-          setDevolucao(pedido.dataFim?.substring(0, 10) || "");
+
+          const inicio =
+            pedido.dataInicio?.substring(0, 10) || "";
+
+          setRetirada(inicio);
+
+          setDevolucao(
+            pedido.dataFim?.substring(0, 10) || ""
+          );
+
+          if (inicio) {
+            const [ano, mes] = inicio
+              .split("-")
+              .map(Number);
+
+            setMesAtual(new Date(ano, mes - 1, 1));
+          }
         } else {
           const carroPorUuid = dadosCarros.find(
             (item) => item.id === parametroCarro
           );
 
-          const indiceAntigo = Number(parametroCarro) - 1;
+          const indiceAntigo =
+            Number(parametroCarro) - 1;
+
           const chaveAntiga = ordemAntiga[indiceAntigo];
 
           const carroPorNumero = chaveAntiga
             ? dadosCarros.find(
                 (item) =>
-                  `${item.marca}|${item.modelo}` === chaveAntiga
+                  `${item.marca}|${item.modelo}` ===
+                  chaveAntiga
               )
             : null;
 
           const selecionado =
-            carroPorUuid || carroPorNumero || dadosCarros[0];
+            carroPorUuid ||
+            carroPorNumero ||
+            dadosCarros[0];
 
           setCarroId(selecionado?.id || "");
           setRetirada("");
@@ -186,7 +310,69 @@ export default function PedidoAluguel() {
     };
   }, [modoEdicao, pedidoId, parametroCarro]);
 
-  const carro = carros.find((item) => item.id === carroId);
+  // BUSCA OS PERÍODOS OCUPADOS DO AUTOMÓVEL
+  useEffect(() => {
+    if (!carroId) {
+      setPeriodosOcupados([]);
+      setCarroPeriodosCarregado("");
+      return;
+    }
+
+    const controlador = new AbortController();
+
+    setCarregandoPeriodos(true);
+    setErroPeriodos("");
+    setCarroPeriodosCarregado("");
+    setPeriodosOcupados([]);
+
+    async function carregarPeriodos() {
+      try {
+        const resposta = await fetch(
+          `/api/automoveis/${carroId}/periodos-ocupados`,
+          {
+            credentials: "include",
+            signal: controlador.signal,
+          }
+        );
+
+        if (!resposta.ok) {
+          throw new Error(
+            "Não foi possível carregar o calendário."
+          );
+        }
+
+        const dados = await resposta.json();
+
+        if (!Array.isArray(dados)) {
+          throw new Error(
+            "Os períodos recebidos são inválidos."
+          );
+        }
+
+        if (controlador.signal.aborted) return;
+
+        setPeriodosOcupados(dados);
+        setCarroPeriodosCarregado(carroId);
+      } catch (error) {
+        if (controlador.signal.aborted) return;
+
+        setErroPeriodos(error.message);
+      } finally {
+        if (!controlador.signal.aborted) {
+          setCarregandoPeriodos(false);
+        }
+      }
+    }
+
+    carregarPeriodos();
+
+    return () => controlador.abort();
+  }, [carroId]);
+
+  const carro = carros.find(
+    (item) => item.id === carroId
+  );
+
   const dias = calcularDias(retirada, devolucao);
   const total = dias * Number(carro?.valorDiaria || 0);
 
@@ -195,8 +381,23 @@ export default function PedidoAluguel() {
     retirada >= hoje &&
     devolucao > retirada;
 
-  const chaveConsulta = `${carroId}|${retirada}|${devolucao}`;
+  const chaveConsulta =
+    `${carroId}|${retirada}|${devolucao}`;
 
+  const periodosCarregados =
+    carroPeriodosCarregado === carroId &&
+    !carregandoPeriodos &&
+    !erroPeriodos;
+
+  const conflitoCalendario =
+    periodosCarregados &&
+    periodoConflitante(
+      retirada,
+      devolucao,
+      periodosOcupados
+    );
+
+  // CONSULTA ORIGINAL DE DISPONIBILIDADE
   useEffect(() => {
     if (!datasValidas || carregando) return;
 
@@ -233,8 +434,11 @@ export default function PedidoAluguel() {
         if (controlador.signal.aborted) return;
 
         setDisponibilidade(
-          dados.disponivel ? "disponivel" : "indisponivel"
+          dados.disponivel
+            ? "disponivel"
+            : "indisponivel"
         );
+
         setConsultaConfirmada(chaveConsulta);
       } catch (error) {
         if (controlador.signal.aborted) return;
@@ -257,7 +461,8 @@ export default function PedidoAluguel() {
   ]);
 
   const statusDisponibilidade =
-    !datasValidas || consultaConfirmada !== chaveConsulta
+    !datasValidas ||
+    consultaConfirmada !== chaveConsulta
       ? "inicial"
       : disponibilidade;
 
@@ -266,8 +471,70 @@ export default function PedidoAluguel() {
     !enviando &&
     Boolean(carro) &&
     datasValidas &&
+    periodosCarregados &&
+    !conflitoCalendario &&
     statusDisponibilidade === "disponivel" &&
     (!modoEdicao || Boolean(pedidoId));
+
+  const diasCalendario = gerarDiasMes(mesAtual);
+
+  const mesMinimo = mesInicial();
+
+  const podeVoltarMes =
+    mesAtual.getFullYear() > mesMinimo.getFullYear() ||
+    (
+      mesAtual.getFullYear() === mesMinimo.getFullYear() &&
+      mesAtual.getMonth() > mesMinimo.getMonth()
+    );
+
+  function mudarMes(direcao) {
+    setMesAtual(
+      (anterior) =>
+        new Date(
+          anterior.getFullYear(),
+          anterior.getMonth() + direcao,
+          1
+        )
+    );
+  }
+
+  function selecionarData(data) {
+    if (!periodosCarregados) return;
+
+    if (
+      data < hoje ||
+      dataOcupada(data, periodosOcupados)
+    ) {
+      return;
+    }
+
+    setErro("");
+
+    // Primeiro clique: retirada.
+    // Segundo clique: devolução.
+    // Terceiro clique: inicia uma nova seleção.
+    if (!retirada || devolucao || data <= retirada) {
+      setRetirada(data);
+      setDevolucao("");
+      return;
+    }
+
+    if (
+      periodoConflitante(
+        retirada,
+        data,
+        periodosOcupados
+      )
+    ) {
+      setErro(
+        "O intervalo selecionado possui dias ocupados. " +
+        "Escolha outro período."
+      );
+      return;
+    }
+
+    setDevolucao(data);
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -284,12 +551,16 @@ export default function PedidoAluguel() {
     }
 
     if (retirada < hoje) {
-      setErro("A data de retirada não pode estar no passado.");
+      setErro(
+        "A data de retirada não pode estar no passado."
+      );
       return;
     }
 
     if (devolucao <= retirada) {
-      setErro("A devolução deve ocorrer depois da retirada.");
+      setErro(
+        "A devolução deve ocorrer depois da retirada."
+      );
       return;
     }
 
@@ -329,6 +600,7 @@ export default function PedidoAluguel() {
 
       if (!resultado.disponivel) {
         setDisponibilidade("indisponivel");
+
         throw new Error(
           "Este automóvel já está reservado para o período selecionado."
         );
@@ -337,7 +609,9 @@ export default function PedidoAluguel() {
       const csrf = await obterCsrf();
 
       const resposta = await fetch(
-        modoEdicao ? `/api/pedidos/${pedidoId}` : "/api/pedidos",
+        modoEdicao
+          ? `/api/pedidos/${pedidoId}`
+          : "/api/pedidos",
         {
           method: modoEdicao ? "PUT" : "POST",
           credentials: "include",
@@ -367,7 +641,8 @@ export default function PedidoAluguel() {
       navigate("/pedidos", { replace: true });
     } catch (error) {
       setErro(
-        error.message || "Não foi possível concluir a operação."
+        error.message ||
+        "Não foi possível concluir a operação."
       );
     } finally {
       setEnviando(false);
@@ -384,7 +659,10 @@ export default function PedidoAluguel() {
     );
   }
 
-  if (!carros.length || (modoEdicao && erro && !carroId)) {
+  if (
+    !carros.length ||
+    (modoEdicao && erro && !carroId)
+  ) {
     return (
       <main className="pedido-page">
         <div className="pedido-container">
@@ -432,7 +710,10 @@ export default function PedidoAluguel() {
         </header>
 
         <div className="pedido-layout">
-          <form className="pedido-form" onSubmit={handleSubmit}>
+          <form
+            className="pedido-form"
+            onSubmit={handleSubmit}
+          >
             <section className="pedido-form-section">
               <h2>Veículo selecionado</h2>
 
@@ -447,7 +728,10 @@ export default function PedidoAluguel() {
                   required
                 >
                   {carros.map((item) => (
-                    <option key={item.id} value={item.id}>
+                    <option
+                      key={item.id}
+                      value={item.id}
+                    >
                       {item.marca} {item.modelo}
                     </option>
                   ))}
@@ -461,6 +745,170 @@ export default function PedidoAluguel() {
                 Período do aluguel
               </h2>
 
+              <p className="pedido-calendario-intro">
+                Consulte as datas disponíveis e selecione
+                o período desejado.
+              </p>
+
+              {/* CALENDÁRIO VISUAL */}
+              <div className="pedido-calendario">
+                <div className="pedido-calendario-topo">
+                  <h3>{formatarMes(mesAtual)}</h3>
+
+                  <div className="pedido-calendario-navegacao">
+                    <button
+                      type="button"
+                      onClick={() => mudarMes(-1)}
+                      disabled={!podeVoltarMes}
+                      aria-label="Mês anterior"
+                    >
+                      <ChevronLeft size={19} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => mudarMes(1)}
+                      aria-label="Próximo mês"
+                    >
+                      <ChevronRight size={19} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pedido-calendario-grade">
+                  {diasSemana.map((dia, indice) => (
+                    <span
+                      key={indice}
+                      className="pedido-calendario-semana"
+                    >
+                      {dia}
+                    </span>
+                  ))}
+
+                  {diasCalendario.map((data, indice) => {
+                    if (!data) {
+                      return (
+                        <span
+                          key={`vazio-${indice}`}
+                          className="pedido-calendario-vazio"
+                        />
+                      );
+                    }
+
+                    const passado = data < hoje;
+
+                    const ocupado =
+                      periodosCarregados &&
+                      dataOcupada(
+                        data,
+                        periodosOcupados
+                      );
+
+                    const inicioSelecionado =
+                      data === retirada;
+
+                    const fimSelecionado =
+                      data === devolucao;
+
+                    const dentroPeriodo =
+                      retirada &&
+                      devolucao &&
+                      data > retirada &&
+                      data < devolucao;
+
+                    const selecionado =
+                      inicioSelecionado ||
+                      fimSelecionado;
+
+                    const indisponivel =
+                      passado ||
+                      ocupado ||
+                      !periodosCarregados;
+
+                    const numeroDia =
+                      Number(data.substring(8, 10));
+
+                    const classes = [
+                      "pedido-calendario-dia",
+                      passado && "passado",
+                      ocupado && "ocupado",
+                      selecionado && "selecionado",
+                      dentroPeriodo && "no-periodo",
+                      data === hoje && "hoje",
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+
+                    return (
+                      <button
+                        key={data}
+                        type="button"
+                        className={classes}
+                        disabled={indisponivel}
+                        onClick={() =>
+                          selecionarData(data)
+                        }
+                        aria-label={
+                          `${numeroDia} de ${formatarMes(mesAtual)}` +
+                          (ocupado ? ", ocupado" : "") +
+                          (selecionado ? ", selecionado" : "")
+                        }
+                        aria-pressed={Boolean(selecionado)}
+                        title={
+                          ocupado
+                            ? "Automóvel reservado"
+                            : passado
+                              ? "Data anterior à atual"
+                              : "Selecionar data"
+                        }
+                      >
+                        {numeroDia}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pedido-calendario-legenda">
+                  <span>
+                    <i className="legenda-livre" />
+                    Disponível
+                  </span>
+
+                  <span>
+                    <i className="legenda-ocupado" />
+                    Ocupado
+                  </span>
+
+                  <span>
+                    <i className="legenda-selecionado" />
+                    Selecionado
+                  </span>
+                </div>
+
+                {carregandoPeriodos && (
+                  <p className="pedido-calendario-aviso">
+                    Carregando períodos reservados...
+                  </p>
+                )}
+
+                {erroPeriodos && (
+                  <p
+                    className="pedido-mensagem pedido-erro"
+                    role="alert"
+                  >
+                    {erroPeriodos}
+                  </p>
+                )}
+
+                <p className="pedido-calendario-instrucao">
+                  Selecione primeiro a retirada e depois
+                  a devolução. O dia da devolução de uma
+                  reserva anterior pode ser escolhido
+                  como início de outra.
+                </p>
+              </div>
+
+              {/* CAMPOS ORIGINAIS DE DATA */}
               <div className="pedido-fields">
                 <label>
                   Data de retirada
@@ -470,6 +918,7 @@ export default function PedidoAluguel() {
                     value={retirada}
                     onChange={(event) => {
                       setRetirada(event.target.value);
+                      setDevolucao("");
                       setErro("");
                     }}
                     required
@@ -504,23 +953,26 @@ export default function PedidoAluguel() {
                 </p>
               )}
 
-              {statusDisponibilidade === "disponivel" && (
-                <p
-                  className="pedido-mensagem"
-                  role="status"
-                  style={{ color: "#24573e" }}
-                >
-                  Automóvel disponível para o período selecionado.
-                </p>
-              )}
+              {statusDisponibilidade === "disponivel" &&
+                !conflitoCalendario && (
+                  <p
+                    className="pedido-mensagem pedido-sucesso"
+                    role="status"
+                  >
+                    Automóvel disponível para o período
+                    selecionado.
+                  </p>
+                )}
 
-              {statusDisponibilidade === "indisponivel" && (
+              {(statusDisponibilidade === "indisponivel" ||
+                conflitoCalendario) && (
                 <p
                   className="pedido-mensagem pedido-erro"
                   role="alert"
                 >
-                  Este automóvel já possui uma reserva aprovada
-                  nesse período. Escolha outras datas ou outro veículo.
+                  Este automóvel já possui uma reserva
+                  aprovada nesse período. Escolha outras
+                  datas ou outro veículo.
                 </p>
               )}
 
@@ -577,8 +1029,8 @@ export default function PedidoAluguel() {
             {modoEdicao && (
               <p className="pedido-mensagem">
                 A edição mantém sua solicitação em análise.
-                O valor será recalculado com base nas novas datas
-                e no automóvel escolhido.
+                O valor será recalculado com base nas novas
+                datas e no automóvel escolhido.
               </p>
             )}
 
@@ -601,7 +1053,7 @@ export default function PedidoAluguel() {
                   ? "Salvando alterações..."
                   : "Enviando solicitação..."
                 : datasValidas &&
-                    statusDisponibilidade !== "disponivel"
+                    !podeEnviar
                   ? "Verificando disponibilidade..."
                   : modoEdicao
                     ? "Salvar alterações"
@@ -609,23 +1061,31 @@ export default function PedidoAluguel() {
             </button>
           </form>
 
+          {/* RESUMO ORIGINAL */}
           {carro && (
             <aside className="pedido-resumo">
               <span className="pedido-resumo-label">
                 VEÍCULO SELECIONADO
               </span>
 
-              {imagens[`${carro.marca}|${carro.modelo}`] && (
+              {imagens[
+                `${carro.marca}|${carro.modelo}`
+              ] && (
                 <img
                   src={
-                    imagens[`${carro.marca}|${carro.modelo}`]
+                    imagens[
+                      `${carro.marca}|${carro.modelo}`
+                    ]
                   }
                   alt={`${carro.marca} ${carro.modelo}`}
                 />
               )}
 
               <h2>{carro.marca}</h2>
-              <p className="pedido-modelo">{carro.modelo}</p>
+
+              <p className="pedido-modelo">
+                {carro.modelo}
+              </p>
 
               <div className="pedido-resumo-linha">
                 <span>Valor da diária</span>
@@ -636,12 +1096,16 @@ export default function PedidoAluguel() {
 
               <div className="pedido-resumo-linha">
                 <span>Quantidade de diárias</span>
-                <strong>{dias > 0 ? dias : "—"}</strong>
+                <strong>
+                  {dias > 0 ? dias : "—"}
+                </strong>
               </div>
 
               <div className="pedido-resumo-total">
                 <span>Valor estimado</span>
-                <strong>{formatarMoeda(total)}</strong>
+                <strong>
+                  {formatarMoeda(total)}
+                </strong>
               </div>
 
               <p className="pedido-nota">

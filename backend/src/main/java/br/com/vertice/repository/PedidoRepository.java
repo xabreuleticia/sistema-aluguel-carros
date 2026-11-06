@@ -39,4 +39,11 @@ public interface PedidoRepository
             @Param("dataInicio") LocalDate dataInicio,
             @Param("dataFim") LocalDate dataFim
     );
+
+    // Retorna somente reservas aprovadas,
+    // sem expor informações dos clientes.
+    List<Pedido> findByAutomovelIdAndStatusOrderByDataInicioAsc(
+            UUID automovelId,
+            String status
+    );
 }

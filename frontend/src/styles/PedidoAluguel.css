@@ -67,7 +67,7 @@
 }
 
 /* =========================================================
-   3. LAYOUT
+   3. LAYOUT PRINCIPAL
    ========================================================= */
 
 .pedido-layout {
@@ -361,7 +361,226 @@
 }
 
 /* =========================================================
-   10. RESPONSIVIDADE — TABLETS
+   10. INTRODUÇÃO DO CALENDÁRIO
+   ========================================================= */
+
+.pedido-calendario-intro {
+  margin: -10px 0 24px;
+  color: #7c8479;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.pedido-calendario {
+  margin-bottom: 28px;
+  padding: 24px;
+  border: 1px solid #e2e5dc;
+  background: #fbfbf7;
+}
+
+/* =========================================================
+   11. CABEÇALHO DO CALENDÁRIO
+   ========================================================= */
+
+.pedido-calendario-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 26px;
+}
+
+.pedido-calendario-topo h3 {
+  margin: 0;
+  color: #173f35;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 23px;
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+.pedido-calendario-navegacao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pedido-calendario-navegacao button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #dce1d8;
+  border-radius: 0;
+  background: #fffefb;
+  color: #173f35;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.pedido-calendario-navegacao button:hover:not(:disabled) {
+  background: #173f35;
+  color: #ffffff;
+}
+
+.pedido-calendario-navegacao button:focus-visible {
+  outline: 2px solid #173f35;
+  outline-offset: 2px;
+}
+
+.pedido-calendario-navegacao button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   12. GRADE DO CALENDÁRIO
+   ========================================================= */
+
+.pedido-calendario-grade {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pedido-calendario-semana {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  color: #8b947f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pedido-calendario-vazio {
+  min-height: 42px;
+}
+
+.pedido-calendario-dia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: #eef1e9;
+  color: #173f35;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.pedido-calendario-dia:hover:not(:disabled) {
+  border-color: #173f35;
+  background: #dce8de;
+}
+
+.pedido-calendario-dia.hoje {
+  border-color: #8a9c88;
+}
+
+.pedido-calendario-dia.passado {
+  background: #f3f3ee;
+  color: #b3b9af;
+  cursor: not-allowed;
+}
+
+.pedido-calendario-dia.ocupado {
+  background: #f3dcd7;
+  color: #994d42;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.pedido-calendario-dia.no-periodo {
+  background: #d7e7d9;
+  color: #173f35;
+}
+
+.pedido-calendario-dia.selecionado {
+  border-color: #173f35;
+  background: #173f35;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.pedido-calendario-dia:focus-visible {
+  outline: 2px solid #173f35;
+  outline-offset: 2px;
+}
+
+.pedido-calendario-dia:disabled:not(.ocupado):not(.passado) {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+/* =========================================================
+   13. LEGENDA DO CALENDÁRIO
+   ========================================================= */
+
+.pedido-calendario-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e8df;
+}
+
+.pedido-calendario-legenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #6e796e;
+  font-size: 11px;
+}
+
+.pedido-calendario-legenda i {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.legenda-livre {
+  background: #eef1e9;
+  border: 1px solid #dce1d8;
+}
+
+.legenda-ocupado {
+  background: #f3dcd7;
+}
+
+.legenda-selecionado {
+  background: #173f35;
+}
+
+.pedido-calendario-instrucao,
+.pedido-calendario-aviso {
+  margin: 18px 0 0;
+  color: #7c8479;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+/* =========================================================
+   14. RESPONSIVIDADE — TABLETS
    ========================================================= */
 
 @media (max-width: 850px) {
@@ -375,8 +594,36 @@
 }
 
 /* =========================================================
-   11. RESPONSIVIDADE — CELULARES
+   15. RESPONSIVIDADE — CELULARES
    ========================================================= */
+
+@media (max-width: 600px) {
+  .pedido-calendario {
+    padding: 15px;
+  }
+
+  .pedido-calendario-topo h3 {
+    font-size: 20px;
+  }
+
+  .pedido-calendario-grade {
+    gap: 4px;
+  }
+
+  .pedido-calendario-dia {
+    min-height: 38px;
+    padding: 4px;
+    font-size: 12px;
+  }
+
+  .pedido-calendario-semana {
+    font-size: 9px;
+  }
+
+  .pedido-calendario-legenda {
+    gap: 12px;
+  }
+}
 
 @media (max-width: 500px) {
   .pedido-page {
@@ -411,5 +658,24 @@
 
   .pedido-resumo-total strong {
     font-size: 24px;
+  }
+}
+
+@media (max-width: 380px) {
+  .pedido-calendario {
+    padding: 10px;
+  }
+
+  .pedido-calendario-dia {
+    min-height: 34px;
+    font-size: 11px;
+  }
+
+  .pedido-calendario-topo h3 {
+    font-size: 18px;
+  }
+
+  .pedido-calendario-legenda {
+    gap: 9px;
   }
 }

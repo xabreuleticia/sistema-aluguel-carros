@@ -1,44 +1,43 @@
 
 package br.com.vertice.controller;
 
-import br.com.vertice.model.Usuario;
-import br.com.vertice.repository.UsuarioRepository;
+import br.com.vertice.service.BancoService;
 
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/agente/bancos")
+@RequestMapping("/api/banco")
 public class BancoController {
 
-    private final UsuarioRepository usuarioRepository;
+    private final BancoService bancoService;
 
-    public BancoController(
-            UsuarioRepository usuarioRepository
-    ) {
-        this.usuarioRepository = usuarioRepository;
+    public BancoController(BancoService bancoService) {
+        this.bancoService = bancoService;
     }
 
-    public record BancoResponse(
-            UUID id,
-            String nome
-    ) {}
+    @GetMapping("/solicitacoes")
+    public List<BancoService.SolicitacaoCredito> listar(
+            Authentication authentication
+    ) {
+        return bancoService.listar(
+                authentication.getName()
+        );
+    }
 
-    @GetMapping
-    public List<BancoResponse> listarBancos() {
-        return usuarioRepository
-                .findByPerfilAndTipoAgenteAndAtivoTrueOrderByNomeAsc(
-                        "AGENTE",
-                        "BANCO"
-                )
-                .stream()
-                .map(usuario -> new BancoResponse(
-                        usuario.getId(),
-                        usuario.getNome()
-                ))
-                .toList();
+    @PatchMapping("/solicitacoes/{id}/decisao")
+    public BancoService.SolicitacaoCredito decidir(
+            @PathVariable UUID id,
+            @RequestBody BancoService.DecisaoCreditoRequest dados,
+            Authentication authentication
+    ) {
+        return bancoService.decidir(
+                authentication.getName(),
+                id,
+                dados
+        );
     }
 }

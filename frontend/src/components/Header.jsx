@@ -1,7 +1,14 @@
 
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import { usuarioAtual, sair } from "../service/auth";
+import { rotaInicial } from "../utils/rotasPerfil";
+
 import "../styles/Header.css";
 
 export default function Header() {
@@ -23,17 +30,11 @@ export default function Header() {
       try {
         const dados = await usuarioAtual();
 
-        if (ativo) {
-          setUsuario(dados);
-        }
+        if (ativo) setUsuario(dados);
       } catch {
-        if (ativo) {
-          setUsuario(null);
-        }
+        if (ativo) setUsuario(null);
       } finally {
-        if (ativo) {
-          setCarregando(false);
-        }
+        if (ativo) setCarregando(false);
       }
     }
 
@@ -65,26 +66,59 @@ export default function Header() {
       : "";
   }
 
+  const cliente = usuario?.perfil === "CLIENTE";
+
+  const empresa =
+    usuario?.perfil === "AGENTE" &&
+    usuario?.tipoAgente === "EMPRESA";
+
+  const banco =
+    usuario?.perfil === "AGENTE" &&
+    usuario?.tipoAgente === "BANCO";
+
+  const admin = usuario?.perfil === "ADMIN";
+
+  const administrativo = empresa || banco || admin;
+
   return (
     <header className="site-header">
-      <Link to="/" className="site-logo">
+      <Link
+        to={administrativo ? rotaInicial(usuario) : "/"}
+        className="site-logo"
+      >
         VÉRTICE
       </Link>
 
-      <nav className="site-nav" aria-label="Navegação principal">
-        <Link to="/" className={linkAtivo("/")}>
-          Início
-        </Link>
+      <nav
+        className="site-nav"
+        aria-label="Navegação principal"
+      >
+        {!carregando && !administrativo && (
+          <>
+            <Link
+              to="/"
+              className={linkAtivo("/")}
+            >
+              Início
+            </Link>
 
-        <Link to="/carros" className={linkAtivo("/carros")}>
-          Carros
-        </Link>
+            <Link
+              to="/carros"
+              className={linkAtivo("/carros")}
+            >
+              Carros
+            </Link>
 
-        <Link to="/sobre" className={linkAtivo("/sobre")}>
-          Sobre
-        </Link>
+            <Link
+              to="/sobre"
+              className={linkAtivo("/sobre")}
+            >
+              Sobre
+            </Link>
+          </>
+        )}
 
-        {!carregando && usuario?.perfil === "CLIENTE" && (
+        {cliente && (
           <>
             <Link
               to="/pedidos"
@@ -102,12 +136,30 @@ export default function Header() {
           </>
         )}
 
-        {!carregando && usuario?.perfil === "AGENTE" && (
+        {empresa && (
           <Link
             to="/agente"
             className={linkAtivo("/agente")}
           >
-            Painel do agente
+            Gestão de aluguéis
+          </Link>
+        )}
+
+        {banco && (
+          <Link
+            to="/banco"
+            className={linkAtivo("/banco")}
+          >
+            Operações bancárias
+          </Link>
+        )}
+
+        {admin && (
+          <Link
+            to="/admin"
+            className={linkAtivo("/admin")}
+          >
+            Gerenciar usuários
           </Link>
         )}
       </nav>
@@ -133,7 +185,10 @@ export default function Header() {
             </button>
           </>
         ) : (
-          <Link to="/login" className="header-button">
+          <Link
+            to="/login"
+            className="header-button"
+          >
             Entrar
           </Link>
         )}

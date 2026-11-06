@@ -8,9 +8,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -39,54 +39,56 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // Permite obter o token CSRF
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/auth/csrf"
                 ).permitAll()
 
-                // Permite cadastro e login
                 .requestMatchers(
                     HttpMethod.POST,
                     "/api/auth/cadastro",
                     "/api/auth/login"
                 ).permitAll()
 
-                // Consulta pública de automóveis
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/automoveis"
                 ).permitAll()
 
-                // Permite apresentar erros
-                .requestMatchers("/error")
-                .permitAll()
+                .requestMatchers("/error").permitAll()
 
-                // Endpoints de autenticação
-                .requestMatchers("/api/auth/**")
-                .authenticated()
+                // Administrador: somente gestão de contas.
+                .requestMatchers("/api/admin/**")
+                .hasRole("ADMIN")
 
-                // Área exclusiva de agentes
+                // Banco: somente operações bancárias.
+                .requestMatchers("/api/banco/**")
+                .hasRole("AGENTE_BANCO")
+
+                // Empresa: administração de aluguéis.
                 .requestMatchers("/api/agente/**")
-                .hasRole("AGENTE")
+                .hasRole("AGENTE_EMPRESA")
 
-                // Área exclusiva de clientes
+                // Cliente: área pessoal.
                 .requestMatchers("/api/perfil/**")
                 .hasRole("CLIENTE")
 
                 .requestMatchers("/api/contratos/**")
                 .hasRole("CLIENTE")
 
-                // Pedidos
+                // Pedidos do cliente.
                 .requestMatchers("/api/pedidos/**")
-                .hasAnyRole("CLIENTE", "AGENTE")
+                .hasRole("CLIENTE")
 
-                // Demais endpoints
+                // Outros endpoints de autenticação.
+                .requestMatchers("/api/auth/**")
+                .authenticated()
+
+                // Demais endpoints não públicos.
                 .anyRequest().authenticated()
             )
 
             .exceptionHandling(ex -> ex
-
                 .authenticationEntryPoint(
                     (request, response, exception) ->
                         response.sendError(401)
@@ -98,8 +100,6 @@ public class SecurityConfig {
                 )
             )
 
-            // Verifica se a conta continua ativa
-            // antes de autorizar a requisição.
             .addFilterBefore(
                 contaAtivaFilter,
                 AuthorizationFilter.class

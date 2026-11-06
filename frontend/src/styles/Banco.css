@@ -1,0 +1,338 @@
+
+.banco-pagina {
+  min-height: 100vh;
+  background: #f5f2e9;
+  color: #242424;
+  padding: 48px 5%;
+}
+
+.banco-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.banco-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 36px;
+}
+
+.banco-etiqueta {
+  display: block;
+  margin-bottom: 12px;
+  color: #94784c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.banco-topo h1 {
+  margin: 0 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 400;
+}
+
+.banco-topo p,
+.banco-secao-topo p {
+  color: #777;
+  line-height: 1.7;
+}
+
+.banco-atualizar,
+.banco-botao-decisao {
+  border: none;
+  border-radius: 8px;
+  padding: 13px 20px;
+  background: #292929;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.banco-atualizar:hover,
+.banco-botao-decisao:hover {
+  background: #94784c;
+}
+
+.banco-atualizar:disabled,
+.banco-botao-decisao:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.banco-indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 36px;
+}
+
+.banco-indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px;
+  background: #fffdf8;
+  border: 1px solid #e1dbd0;
+  border-radius: 12px;
+}
+
+.banco-indicador span {
+  color: #777;
+  font-size: 13px;
+}
+
+.banco-indicador strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 36px;
+  font-weight: 400;
+}
+
+.banco-listagem {
+  background: #fffdf8;
+  border: 1px solid #e1dbd0;
+  border-radius: 14px;
+  padding: 30px;
+}
+
+.banco-secao-topo h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.banco-filtros {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.banco-filtros input {
+  flex: 1;
+}
+
+.banco-filtros input,
+.banco-filtros select,
+.banco-formulario select,
+.banco-formulario textarea {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d6cfc2;
+  border-radius: 8px;
+  background: #fff;
+  color: #242424;
+  font: inherit;
+}
+
+.banco-alerta {
+  padding: 15px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+}
+
+.banco-erro {
+  color: #8b2727;
+  background: #fff0f0;
+}
+
+.banco-sucesso {
+  color: #256343;
+  background: #eaf5ed;
+}
+
+.banco-vazio {
+  padding: 48px 20px;
+  text-align: center;
+  color: #777;
+}
+
+.banco-vazio h3 {
+  color: #242424;
+}
+
+.banco-cards {
+  display: grid;
+  gap: 20px;
+}
+
+.banco-card {
+  padding: 26px;
+  border: 1px solid #e1dbd0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.banco-card-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.banco-card-topo h3 {
+  margin: 0 0 8px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+}
+
+.banco-card-topo small {
+  color: #777;
+}
+
+.banco-status {
+  padding: 8px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.banco-status-pendente {
+  color: #8c641c;
+  background: #fff2d8;
+}
+
+.banco-status-aprovado {
+  color: #256343;
+  background: #eaf5ed;
+}
+
+.banco-status-recusado {
+  color: #8b2727;
+  background: #fff0f0;
+}
+
+.banco-dados {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  padding: 20px 0;
+  border-top: 1px solid #eee8dd;
+  border-bottom: 1px solid #eee8dd;
+}
+
+.banco-dados div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.banco-dados span {
+  color: #777;
+  font-size: 12px;
+}
+
+.banco-dados strong {
+  font-size: 16px;
+}
+
+.banco-empregos {
+  margin-top: 24px;
+}
+
+.banco-empregos h4,
+.banco-formulario h4 {
+  margin: 0 0 16px;
+  font-size: 17px;
+}
+
+.banco-empregos p {
+  margin: 8px 0;
+}
+
+.banco-empregos small {
+  color: #777;
+}
+
+.banco-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 24px;
+  background: #f5f2e9;
+  border-radius: 10px;
+}
+
+.banco-formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.banco-formulario select,
+.banco-formulario textarea {
+  width: 100%;
+}
+
+.banco-formulario textarea {
+  resize: vertical;
+}
+
+.banco-botao-decisao {
+  align-self: flex-start;
+}
+
+.banco-decisao {
+  margin-top: 24px;
+  padding: 20px;
+  background: #f5f2e9;
+  border-radius: 10px;
+}
+
+.banco-decisao p {
+  line-height: 1.6;
+}
+
+.banco-decisao small {
+  color: #777;
+}
+
+@media (max-width: 900px) {
+  .banco-indicadores,
+  .banco-dados {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .banco-pagina {
+    padding: 24px 16px;
+  }
+
+  .banco-topo,
+  .banco-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .banco-indicadores,
+  .banco-dados {
+    grid-template-columns: 1fr;
+  }
+
+  .banco-listagem,
+  .banco-card {
+    padding: 18px;
+  }
+
+  .banco-card-topo {
+    flex-wrap: wrap;
+  }
+
+  .banco-formulario {
+    padding: 16px;
+  }
+
+  .banco-botao-decisao {
+    width: 100%;
+  }
+}

@@ -1,0 +1,63 @@
+
+.painel-administrativo {
+  min-height: calc(100vh - 80px);
+  padding: 60px 6%;
+  background: #f5f2e9;
+  color: #242424;
+}
+
+.painel-admin-intro {
+  max-width: 1100px;
+  margin: 0 auto 36px;
+}
+
+.painel-admin-etiqueta {
+  display: block;
+  margin-bottom: 16px;
+  color: #94784c;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.painel-admin-intro h1 {
+  margin: 0 0 16px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(32px, 5vw, 54px);
+  font-weight: 400;
+}
+
+.painel-admin-intro p {
+  max-width: 700px;
+  color: #696969;
+  line-height: 1.8;
+}
+
+.painel-admin-conteudo {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 36px;
+  background: #fffdf8;
+  border: 1px solid #ddd6c9;
+  border-radius: 12px;
+}
+
+.painel-admin-conteudo h2 {
+  margin-top: 0;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.painel-admin-conteudo p {
+  color: #696969;
+  line-height: 1.8;
+}
+
+@media (max-width: 600px) {
+  .painel-administrativo {
+    padding: 36px 20px;
+  }
+
+  .painel-admin-conteudo {
+    padding: 24px;
+  }
+}

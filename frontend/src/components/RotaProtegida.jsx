@@ -2,10 +2,14 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { usuarioAtual } from "../service/auth";
+import {
+  podeAcessar,
+  rotaInicial,
+} from "../utils/rotasPerfil";
 
 export default function RotaProtegida({
   children,
-  perfisPermitidos,
+  perfisPermitidos = [],
 }) {
   const location = useLocation();
 
@@ -16,7 +20,7 @@ export default function RotaProtegida({
   useEffect(() => {
     let ativo = true;
 
-    async function verificarSessao() {
+    async function verificar() {
       setCarregando(true);
       setErro("");
 
@@ -26,9 +30,15 @@ export default function RotaProtegida({
         if (ativo) {
           setUsuario(dados);
         }
-      } catch {
+      } catch (error) {
         if (ativo) {
-          setErro("Não foi possível verificar sua sessão.");
+          if (error?.status === 401) {
+            setUsuario(null);
+          } else {
+            setErro(
+              "Não foi possível verificar sua sessão."
+            );
+          }
         }
       } finally {
         if (ativo) {
@@ -37,7 +47,7 @@ export default function RotaProtegida({
       }
     }
 
-    verificarSessao();
+    verificar();
 
     return () => {
       ativo = false;
@@ -46,30 +56,42 @@ export default function RotaProtegida({
 
   if (carregando) {
     return (
-      <main style={{ padding: "60px", textAlign: "center" }}>
-        Verificando acesso...
+      <main className="acesso-estado">
+        <p>Verificando permissões...</p>
       </main>
     );
   }
 
   if (erro) {
     return (
-      <main role="alert" style={{ padding: "60px" }}>
-        {erro}
+      <main className="acesso-estado" role="alert">
+        <p>{erro}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+        >
+          Tentar novamente
+        </button>
       </main>
     );
   }
 
   if (!usuario) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname }}
+      />
+    );
   }
 
-  if (!perfisPermitidos.includes(usuario.perfil)) {
+  if (!podeAcessar(usuario, perfisPermitidos)) {
     return (
-      <main style={{ padding: "60px" }}>
-        <h1>Acesso não autorizado</h1>
-        <p>Você não tem permissão para acessar esta página.</p>
-      </main>
+      <Navigate
+        to={rotaInicial(usuario)}
+        replace
+      />
     );
   }
 

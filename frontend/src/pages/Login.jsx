@@ -5,7 +5,10 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
+
 import { entrar } from "../service/auth";
+import { rotaInicial } from "../utils/rotasPerfil";
+
 import "../styles/Login.css";
 
 export default function Login() {
@@ -31,15 +34,19 @@ export default function Login() {
     try {
       const dados = await entrar(usuario.trim(), senha);
 
-      if (dados.perfil === "AGENTE") {
-        navigate("/agente", { replace: true });
-      } else if (dados.perfil === "CLIENTE") {
-        navigate("/pedidos", { replace: true });
-      } else {
+      // O backend determina o perfil real do usuário.
+      // A aba selecionada não altera suas permissões.
+      const destino = rotaInicial(dados);
+
+      if (destino === "/acesso-negado") {
         setErro(
-          "Não foi possível identificar o perfil da sua conta."
+          "Sua conta não possui um perfil válido. " +
+          "Entre em contato com o administrador."
         );
+        return;
       }
+
+      navigate(destino, { replace: true });
     } catch (error) {
       setErro(
         error instanceof TypeError
@@ -111,8 +118,8 @@ export default function Login() {
           </h2>
 
           <p className="login-description">
-            Acesse sua conta para explorar nossa frota
-            e acompanhar seus pedidos.
+            Acesse sua conta para utilizar as
+            funcionalidades disponíveis para o seu perfil.
           </p>
 
           {mensagemCadastro && (
@@ -124,7 +131,10 @@ export default function Login() {
             </p>
           )}
 
-          <div className="login-tabs">
+          <div
+            className="login-tabs"
+            aria-label="Tipo de acesso"
+          >
             <button
               type="button"
               className={
@@ -149,6 +159,19 @@ export default function Login() {
               }}
             >
               Sou agente
+            </button>
+
+            <button
+              type="button"
+              className={
+                tipoUsuario === "admin" ? "active" : ""
+              }
+              onClick={() => {
+                setTipoUsuario("admin");
+                setErro("");
+              }}
+            >
+              Administrador
             </button>
           </div>
 
@@ -223,6 +246,7 @@ export default function Login() {
                   type="checkbox"
                   name="manterConectado"
                 />
+
                 <span>Manter conectado</span>
               </label>
 
@@ -248,25 +272,44 @@ export default function Login() {
               <span>
                 {carregando
                   ? "Entrando..."
-                  : "Entrar na minha conta"}
+                  : tipoUsuario === "admin"
+                    ? "Acessar administração"
+                    : tipoUsuario === "agente"
+                      ? "Acessar painel"
+                      : "Entrar na minha conta"}
               </span>
 
               <span aria-hidden="true"></span>
             </button>
           </form>
 
-          <p className="login-register">
-            Primeira vez por aqui?{" "}
-            <Link to="/cadastro">
-              Criar meu cadastro
-            </Link>
-          </p>
+          {tipoUsuario === "cliente" && (
+            <p className="login-register">
+              Primeira vez por aqui?{" "}
+              <Link to="/cadastro">
+                Criar meu cadastro
+              </Link>
+            </p>
+          )}
+
+          {tipoUsuario === "agente" && (
+            <p className="login-register">
+              O acesso de agentes é disponibilizado
+              pelo administrador do sistema.
+            </p>
+          )}
+
+          {tipoUsuario === "admin" && (
+            <p className="login-register">
+              Área restrita à administração do VÉRTICE.
+            </p>
+          )}
         </div>
 
         <div className="login-content-footer">
           <p>
-            Acesso exclusivo para clientes
-            e agentes cadastrados.
+            Acesso seguro para clientes, agentes
+            e administradores cadastrados.
           </p>
 
           <span>VÉRTICE © 2026</span>

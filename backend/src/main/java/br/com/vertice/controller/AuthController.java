@@ -22,6 +22,8 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -65,8 +67,66 @@ public class AuthController {
         );
     }
 
+    private List<SimpleGrantedAuthority> permissoes(
+            Usuario usuario
+    ) {
+        List<SimpleGrantedAuthority> autoridades =
+                new ArrayList<>();
+
+        String perfil = usuario.getPerfil();
+
+        if ("CLIENTE".equals(perfil)) {
+            autoridades.add(
+                new SimpleGrantedAuthority("ROLE_CLIENTE")
+            );
+        } else if ("ADMIN".equals(perfil)) {
+            autoridades.add(
+                new SimpleGrantedAuthority("ROLE_ADMIN")
+            );
+        } else if ("AGENTE".equals(perfil)) {
+            String tipo = usuario.getTipoAgente();
+
+            if (!"EMPRESA".equals(tipo)
+                    && !"BANCO".equals(tipo)) {
+                throw new IllegalStateException(
+                    "Agente sem tipo válido."
+                );
+            }
+
+            autoridades.add(
+                new SimpleGrantedAuthority("ROLE_AGENTE")
+            );
+
+            autoridades.add(
+                new SimpleGrantedAuthority(
+                    "ROLE_AGENTE_" + tipo
+                )
+            );
+        } else {
+            throw new IllegalStateException(
+                "Perfil de usuário inválido."
+            );
+        }
+
+        return autoridades;
+    }
+
+    private Map<String, Object> dadosUsuario(
+            Usuario usuario
+    ) {
+        Map<String, Object> dados = new LinkedHashMap<>();
+
+        dados.put("id", usuario.getId().toString());
+        dados.put("nome", usuario.getNome());
+        dados.put("email", usuario.getEmail());
+        dados.put("perfil", usuario.getPerfil());
+        dados.put("tipoAgente", usuario.getTipoAgente());
+
+        return dados;
+    }
+
     @PostMapping("/login")
-    public Map<String, String> login(
+    public Map<String, Object> login(
             @Valid @RequestBody LoginRequest dados,
             HttpServletRequest request,
             HttpServletResponse response
@@ -77,11 +137,7 @@ public class AuthController {
             new UsernamePasswordAuthenticationToken(
                 usuario.getEmail(),
                 null,
-                List.of(
-                    new SimpleGrantedAuthority(
-                        "ROLE_" + usuario.getPerfil()
-                    )
-                )
+                permissoes(usuario)
             );
 
         SecurityContext context =
@@ -98,28 +154,18 @@ public class AuthController {
             context, request, response
         );
 
-        return Map.of(
-            "id", usuario.getId().toString(),
-            "nome", usuario.getNome(),
-            "email", usuario.getEmail(),
-            "perfil", usuario.getPerfil()
-        );
+        return dadosUsuario(usuario);
     }
 
     @GetMapping("/me")
-    public Map<String, String> usuarioAtual(
+    public Map<String, Object> usuarioAtual(
             Authentication authentication
     ) {
-        String email = authentication.getName();
-
-        Usuario usuario = loginService.buscarPorEmail(email);
-
-        return Map.of(
-            "id", usuario.getId().toString(),
-            "nome", usuario.getNome(),
-            "email", usuario.getEmail(),
-            "perfil", usuario.getPerfil()
+        Usuario usuario = loginService.buscarPorEmail(
+            authentication.getName()
         );
+
+        return dadosUsuario(usuario);
     }
 
     @PostMapping("/logout")
@@ -132,6 +178,8 @@ public class AuthController {
             request, response, authentication
         );
 
-        return Map.of("mensagem", "Sessão encerrada.");
+        return Map.of(
+            "mensagem", "Sessão encerrada."
+        );
     }
 }

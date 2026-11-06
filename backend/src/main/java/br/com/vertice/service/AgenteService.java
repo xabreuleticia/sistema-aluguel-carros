@@ -81,10 +81,12 @@ public class AgenteService {
 
     private Pedido buscarPedido(UUID id) {
         return pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Pedido não encontrado."
-                ));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Pedido não encontrado."
+                        )
+                );
     }
 
     @Transactional(readOnly = true)
@@ -142,10 +144,12 @@ public class AgenteService {
 
         Automovel automovel = automovelRepository
                 .buscarPorIdComBloqueio(dados.automovelId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Automóvel não encontrado."
-                ));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Automóvel não encontrado."
+                        )
+                );
 
         if (!automovel.isDisponivel()) {
             throw new ResponseStatusException(
@@ -195,10 +199,12 @@ public class AgenteService {
 
         Cliente cliente = clienteRepository
                 .findById(pedido.getClienteId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Cliente não encontrado."
-                ));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Cliente não encontrado."
+                        )
+                );
 
         List<Emprego> empregos =
                 empregoRepository.findByClienteId(cliente.getId());
@@ -295,10 +301,12 @@ public class AgenteService {
                 }
 
                 Usuario banco = usuarioRepository.findById(bancoId)
-                        .orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                "Banco não encontrado."
-                        ));
+                        .orElseThrow(() ->
+                                new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST,
+                                        "Banco não encontrado."
+                                )
+                        );
 
                 if (!banco.isAtivo()
                         || !"AGENTE".equals(banco.getPerfil())
@@ -316,6 +324,12 @@ public class AgenteService {
         pedido.setAnalisadoEm(OffsetDateTime.now());
         pedido.setBancoAgenteId(bancoId);
         pedido.setValorCredito(credito);
+
+        pedido.setStatusCredito(
+                bancoId == null ? null : "PENDENTE"
+        );
+        pedido.setJustificativaCredito(null);
+        pedido.setCreditoAnalisadoEm(null);
 
         return pedidoRepository.save(pedido);
     }
@@ -338,12 +352,22 @@ public class AgenteService {
             );
         }
 
+        if (pedido.getBancoAgenteId() != null
+                && !"APROVADO".equals(pedido.getStatusCredito())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "O financiamento precisa ser aprovado pelo banco antes da aprovação do aluguel."
+            );
+        }
+
         Automovel automovel = automovelRepository
                 .buscarPorIdComBloqueio(pedido.getAutomovelId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Automóvel não encontrado."
-                ));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Automóvel não encontrado."
+                        )
+                );
 
         if (!automovel.isDisponivel()) {
             throw new ResponseStatusException(
@@ -396,7 +420,17 @@ public class AgenteService {
             );
         }
 
+        if (pedido.getBancoAgenteId() != null
+                && "PENDENTE".equals(pedido.getStatusCredito())) {
+            pedido.setStatusCredito("RECUSADO");
+            pedido.setJustificativaCredito(
+                    "Solicitação encerrada após recusa do aluguel pela empresa."
+            );
+            pedido.setCreditoAnalisadoEm(OffsetDateTime.now());
+        }
+
         pedido.setStatus("RECUSADO");
+
         return pedidoRepository.save(pedido);
     }
 }

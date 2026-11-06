@@ -7,7 +7,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,9 +39,6 @@ public class Pedido {
     @Column(nullable = false)
     private String status = "PENDENTE";
 
-    @Column(name = "criado_em", insertable = false, updatable = false)
-    private OffsetDateTime criadoEm;
-
     @Column(name = "parecer_financeiro")
     private String parecerFinanceiro;
 
@@ -58,13 +54,31 @@ public class Pedido {
     @Column(name = "valor_credito")
     private BigDecimal valorCredito;
 
-    @Transient
-    private BigDecimal valorDiaria;
+    @Column(name = "status_credito")
+    private String statusCredito;
 
-    public Pedido() {}
+    @Column(name = "justificativa_credito")
+    private String justificativaCredito;
+
+    @Column(name = "credito_analisado_em")
+    private OffsetDateTime creditoAnalisadoEm;
+
+    @Column(
+        name = "criado_em",
+        insertable = false,
+        updatable = false
+    )
+    private OffsetDateTime criadoEm;
+
+    public Pedido() {
+    }
 
     public UUID getId() {
         return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public UUID getClienteId() {
@@ -115,15 +129,13 @@ public class Pedido {
         this.status = status;
     }
 
-    public OffsetDateTime getCriadoEm() {
-        return criadoEm;
-    }
-
     public String getParecerFinanceiro() {
         return parecerFinanceiro;
     }
 
-    public void setParecerFinanceiro(String parecerFinanceiro) {
+    public void setParecerFinanceiro(
+            String parecerFinanceiro
+    ) {
         this.parecerFinanceiro = parecerFinanceiro;
     }
 
@@ -131,15 +143,20 @@ public class Pedido {
         return justificativaFinanceira;
     }
 
-    public void setJustificativaFinanceira(String justificativaFinanceira) {
-        this.justificativaFinanceira = justificativaFinanceira;
+    public void setJustificativaFinanceira(
+            String justificativaFinanceira
+    ) {
+        this.justificativaFinanceira =
+                justificativaFinanceira;
     }
 
     public OffsetDateTime getAnalisadoEm() {
         return analisadoEm;
     }
 
-    public void setAnalisadoEm(OffsetDateTime analisadoEm) {
+    public void setAnalisadoEm(
+            OffsetDateTime analisadoEm
+    ) {
         this.analisadoEm = analisadoEm;
     }
 
@@ -147,7 +164,9 @@ public class Pedido {
         return bancoAgenteId;
     }
 
-    public void setBancoAgenteId(UUID bancoAgenteId) {
+    public void setBancoAgenteId(
+            UUID bancoAgenteId
+    ) {
         this.bancoAgenteId = bancoAgenteId;
     }
 
@@ -155,15 +174,45 @@ public class Pedido {
         return valorCredito;
     }
 
-    public void setValorCredito(BigDecimal valorCredito) {
+    public void setValorCredito(
+            BigDecimal valorCredito
+    ) {
         this.valorCredito = valorCredito;
     }
 
-    public BigDecimal getValorDiaria() {
-        return valorDiaria;
+    public String getStatusCredito() {
+        return statusCredito;
     }
 
-    public void setValorDiaria(BigDecimal valorDiaria) {
-        this.valorDiaria = valorDiaria;
+    public void setStatusCredito(
+            String statusCredito
+    ) {
+        this.statusCredito = statusCredito;
+    }
+
+    public String getJustificativaCredito() {
+        return justificativaCredito;
+    }
+
+    public void setJustificativaCredito(
+            String justificativaCredito
+    ) {
+        this.justificativaCredito =
+                justificativaCredito;
+    }
+
+    public OffsetDateTime getCreditoAnalisadoEm() {
+        return creditoAnalisadoEm;
+    }
+
+    public void setCreditoAnalisadoEm(
+            OffsetDateTime creditoAnalisadoEm
+    ) {
+        this.creditoAnalisadoEm =
+                creditoAnalisadoEm;
+    }
+
+    public OffsetDateTime getCriadoEm() {
+        return criadoEm;
     }
 }

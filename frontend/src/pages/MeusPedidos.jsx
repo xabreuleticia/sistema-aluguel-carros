@@ -42,9 +42,7 @@ const classeStatus = (status) => {
     return "aprovado";
   }
 
-  if (
-    ["RECUSADO", "REPROVADO", "REJEITADO"].includes(status)
-  ) {
+  if (["RECUSADO", "REPROVADO", "REJEITADO"].includes(status)) {
     return "recusado";
   }
 
@@ -65,6 +63,7 @@ const estilos = {
     paddingTop: "18px",
     borderTop: "1px solid #e4e6dd",
   },
+
   editar: {
     display: "inline-flex",
     alignItems: "center",
@@ -77,7 +76,9 @@ const estilos = {
     fontSize: "12px",
     fontWeight: 600,
     transition: "background 0.2s ease",
+    cursor: "pointer",
   },
+
   cancelar: {
     padding: "12px 20px",
     border: "1px solid #cda59e",
@@ -88,12 +89,51 @@ const estilos = {
     cursor: "pointer",
     transition: "background 0.2s ease",
   },
+
   aviso: {
     margin: "24px 0",
     padding: "18px 22px",
     fontSize: "13px",
     lineHeight: 1.7,
     scrollMarginTop: "110px",
+  },
+
+  modalFundo: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 1000,
+    background: "rgba(15, 35, 29, 0.75)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "20px",
+  },
+
+  modal: {
+    background: "#f5f2e9",
+    color: "#173f35",
+    width: "100%",
+    maxWidth: "580px",
+    maxHeight: "90vh",
+    overflowY: "auto",
+    padding: "32px",
+    boxShadow: "0 20px 70px rgba(0, 0, 0, 0.2)",
+  },
+
+  modalLinha: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+    gap: "12px",
+    padding: "14px 0",
+    borderBottom: "1px solid #d8dcd1",
+    fontSize: "14px",
+  },
+
+  modalRotulo: {
+    color: "#66736a",
+    fontSize: "12px",
   },
 };
 
@@ -107,7 +147,13 @@ export default function MeusPedidos() {
   const [filtro, setFiltro] = useState("TODOS");
   const [cancelandoId, setCancelandoId] = useState(null);
 
+  const [contratoAberto, setContratoAberto] = useState(null);
+  const [carregandoContratoId, setCarregandoContratoId] =
+    useState(null);
+  const [baixandoPdf, setBaixandoPdf] = useState(false);
+
   const avisoRef = useRef(null);
+  const fecharContratoRef = useRef(null);
 
   useEffect(() => {
     let ativo = true;
@@ -172,6 +218,28 @@ export default function MeusPedidos() {
     }
   }, [erroAcao, mensagem]);
 
+  useEffect(() => {
+    if (!contratoAberto) return;
+
+    fecharContratoRef.current?.focus();
+
+    function aoPressionarTecla(evento) {
+      if (evento.key === "Escape" && !baixandoPdf) {
+        setContratoAberto(null);
+      }
+    }
+
+    document.addEventListener("keydown", aoPressionarTecla);
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        aoPressionarTecla
+      );
+    };
+  }, [contratoAberto, baixandoPdf]);
+
+  // CANCELAR PEDIDO
   async function cancelarPedido(id) {
     if (cancelandoId !== null) return;
 
@@ -254,6 +322,164 @@ export default function MeusPedidos() {
     }
   }
 
+  // VISUALIZAR CONTRATO
+  async function visualizarContrato(pedidoId) {
+    if (carregandoContratoId !== null) return;
+
+    setCarregandoContratoId(pedidoId);
+    setErroAcao("");
+    setMensagem("");
+
+    try {
+      const resposta = await fetch(
+        `/api/contratos/pedido/${pedidoId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!resposta.ok) {
+        if (resposta.status === 401) {
+          throw new Error(
+            "Sua sessão expirou. Faça login novamente."
+          );
+        }
+
+        if (resposta.status === 403) {
+          throw new Error(
+            "Você não possui permissão para visualizar este contrato."
+          );
+        }
+
+        if (resposta.status === 404) {
+          throw new Error(
+            "Este pedido ainda não possui um contrato registrado."
+          );
+        }
+
+        if (resposta.status === 409) {
+          throw new Error(
+            "Este pedido ainda não está aprovado."
+          );
+        }
+
+        throw new Error(
+          `Não foi possível carregar o contrato (${resposta.status}).`
+        );
+      }
+
+      const dadosContrato = await resposta.json();
+
+      setContratoAberto(dadosContrato);
+    } catch (error) {
+      setErroAcao(
+        error.message === "Failed to fetch"
+          ? "Não foi possível conectar ao servidor."
+          : error.message ||
+              "Ocorreu um erro ao consultar o contrato."
+      );
+    } finally {
+      setCarregandoContratoId(null);
+    }
+  }
+
+  // BAIXAR CONTRATO EM PDF
+  async function baixarContratoPdf(pedidoId) {
+    if (baixandoPdf) return;
+
+    setBaixandoPdf(true);
+    setErroAcao("");
+    setMensagem("");
+
+    try {
+      const resposta = await fetch(
+        `/api/contratos/pedido/${pedidoId}/pdf`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!resposta.ok) {
+        if (resposta.status === 401) {
+          throw new Error(
+            "Sua sessão expirou. Faça login novamente."
+          );
+        }
+
+        if (resposta.status === 403) {
+          throw new Error(
+            "Você não possui permissão para baixar este contrato."
+          );
+        }
+
+        if (resposta.status === 404) {
+          throw new Error(
+            "O contrato não foi encontrado."
+          );
+        }
+
+        if (resposta.status === 409) {
+          throw new Error(
+            "O pedido não está aprovado."
+          );
+        }
+
+        throw new Error(
+          `Não foi possível gerar o PDF (${resposta.status}).`
+        );
+      }
+
+      const tipoArquivo =
+        resposta.headers.get("content-type") || "";
+
+      if (!tipoArquivo.includes("application/pdf")) {
+        throw new Error(
+          "O servidor não retornou um arquivo PDF válido."
+        );
+      }
+
+      const arquivo = await resposta.blob();
+
+      if (arquivo.size === 0) {
+        throw new Error(
+          "O PDF gerado está vazio."
+        );
+      }
+
+      const url = URL.createObjectURL(arquivo);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `contrato-vertice-${pedidoId}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
+
+      setMensagem(
+        "O download do contrato foi iniciado com sucesso."
+      );
+    } catch (error) {
+      setErroAcao(
+        error.message === "Failed to fetch"
+          ? "Não foi possível conectar ao servidor."
+          : error.message ||
+              "Ocorreu um erro ao baixar o contrato."
+      );
+
+      setContratoAberto(null);
+    } finally {
+      setBaixandoPdf(false);
+    }
+  }
+
+  // INDICADORES
   const aprovados = pedidos.filter((pedido) =>
     ["APROVADO", "APROVADA"].includes(pedido.status)
   ).length;
@@ -272,6 +498,7 @@ export default function MeusPedidos() {
     (pedido) => pedido.status === "CANCELADO"
   ).length;
 
+  // FILTROS E ORDENAÇÃO
   const pedidosFiltrados = pedidos
     .filter((pedido) => {
       if (filtro === "TODOS") return true;
@@ -320,6 +547,7 @@ export default function MeusPedidos() {
 
   return (
     <main className="pedidos-page">
+      {/* HERO */}
       <section className="pedidos-hero">
         <div className="pedidos-container">
           <div className="pedidos-hero-top">
@@ -363,6 +591,7 @@ export default function MeusPedidos() {
         </div>
       </section>
 
+      {/* PAINEL */}
       <section className="pedidos-main">
         <div className="pedidos-container">
           <div className="pedidos-section-heading">
@@ -379,14 +608,17 @@ export default function MeusPedidos() {
             </p>
           </div>
 
+          {/* ESTATÍSTICAS */}
           <div className="pedidos-stats">
             <div className="pedidos-stat">
               <span className="pedidos-stat-label">
                 TOTAL DE PEDIDOS
               </span>
+
               <strong>
                 {carregando ? "—" : pedidos.length}
               </strong>
+
               <span className="pedidos-stat-detail">
                 Solicitações realizadas
               </span>
@@ -396,9 +628,11 @@ export default function MeusPedidos() {
               <span className="pedidos-stat-label">
                 EM ANÁLISE
               </span>
+
               <strong>
                 {carregando ? "—" : pendentes}
               </strong>
+
               <span className="pedidos-stat-detail">
                 Aguardando avaliação
               </span>
@@ -408,9 +642,11 @@ export default function MeusPedidos() {
               <span className="pedidos-stat-label">
                 APROVADOS
               </span>
+
               <strong>
                 {carregando ? "—" : aprovados}
               </strong>
+
               <span className="pedidos-stat-detail">
                 Solicitações aprovadas
               </span>
@@ -420,15 +656,18 @@ export default function MeusPedidos() {
               <span className="pedidos-stat-label">
                 RECUSADOS
               </span>
+
               <strong>
                 {carregando ? "—" : recusados}
               </strong>
+
               <span className="pedidos-stat-detail">
                 Solicitações não aprovadas
               </span>
             </div>
           </div>
 
+          {/* AVISOS */}
           {(erroAcao || mensagem) && (
             <div
               ref={avisoRef}
@@ -451,17 +690,20 @@ export default function MeusPedidos() {
                   ? "Não foi possível concluir a operação."
                   : "Operação concluída."}
               </strong>
+
               <p style={{ margin: "5px 0 0" }}>
                 {erroAcao || mensagem}
               </p>
             </div>
           )}
 
+          {/* FILTROS */}
           <div className="pedidos-lista-topo">
             <div>
               <span className="pedidos-eyebrow">
                 HISTÓRICO DE SOLICITAÇÕES
               </span>
+
               <h2>Meus pedidos</h2>
             </div>
 
@@ -487,18 +729,23 @@ export default function MeusPedidos() {
             </div>
           </div>
 
+          {/* LISTA DE PEDIDOS */}
           {carregando ? (
             <div className="pedidos-estado">
               <span className="pedidos-estado-simbolo">
                 V
               </span>
+
               <h3>Preparando seu painel</h3>
+
               <p>Estamos carregando suas solicitações.</p>
             </div>
           ) : erroCarregamento ? (
             <div className="pedidos-estado" role="alert">
               <h3>Não foi possível carregar</h3>
+
               <p>{erroCarregamento}</p>
+
               <button
                 type="button"
                 className="pedidos-retry"
@@ -539,9 +786,11 @@ export default function MeusPedidos() {
           ) : pedidosFiltrados.length === 0 ? (
             <div className="pedidos-estado">
               <h3>Nenhum pedido encontrado</h3>
+
               <p>
                 Não existem solicitações nessa categoria.
               </p>
+
               <button
                 type="button"
                 className="pedidos-retry"
@@ -561,16 +810,16 @@ export default function MeusPedidos() {
                     <div>
                       <span className="pedido-card-numero">
                         SOLICITAÇÃO{" "}
-                        {String(index + 1).padStart(
-                          2,
-                          "0"
-                        )}
+                        {String(index + 1).padStart(2, "0")}
                       </span>
 
                       <h3>Aluguel de automóvel</h3>
 
                       <span className="pedido-card-id">
-                        Nº {pedido.id.slice(0, 8).toUpperCase()}
+                        Nº{" "}
+                        {pedido.id
+                          .slice(0, 8)
+                          .toUpperCase()}
                       </span>
                     </div>
 
@@ -627,6 +876,7 @@ export default function MeusPedidos() {
                     </span>
                   </div>
 
+                  {/* PEDIDOS PENDENTES */}
                   {pedido.status === "PENDENTE" && (
                     <div style={estilos.acoes}>
                       <Link
@@ -658,6 +908,34 @@ export default function MeusPedidos() {
                       </button>
                     </div>
                   )}
+
+                  {/* PEDIDOS APROVADOS */}
+                  {["APROVADO", "APROVADA"].includes(
+                    pedido.status
+                  ) && (
+                    <div style={estilos.acoes}>
+                      <button
+                        type="button"
+                        style={{
+                          ...estilos.editar,
+                          opacity:
+                            carregandoContratoId !== null
+                              ? 0.65
+                              : 1,
+                        }}
+                        disabled={
+                          carregandoContratoId !== null
+                        }
+                        onClick={() =>
+                          visualizarContrato(pedido.id)
+                        }
+                      >
+                        {carregandoContratoId === pedido.id
+                          ? "Carregando contrato..."
+                          : "Ver contrato"}
+                      </button>
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
@@ -665,12 +943,14 @@ export default function MeusPedidos() {
         </div>
       </section>
 
+      {/* SEÇÃO FINAL */}
       <section className="pedidos-final">
         <div className="pedidos-container pedidos-final-content">
           <div>
             <span className="pedidos-eyebrow">
               O PRÓXIMO DESTINO É SEU
             </span>
+
             <h2>
               Ainda há muito
               <br />
@@ -678,11 +958,235 @@ export default function MeusPedidos() {
             </h2>
           </div>
 
-          <Link to="/" className="pedidos-final-link">
+          <Link
+            to="/"
+            className="pedidos-final-link"
+          >
             Explorar a VÉRTICE
           </Link>
         </div>
       </section>
+
+      {/* MODAL DO CONTRATO */}
+      {contratoAberto && (
+        <div
+          style={estilos.modalFundo}
+          onClick={() => {
+            if (!baixandoPdf) {
+              setContratoAberto(null);
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-contrato"
+            style={estilos.modal}
+            onClick={(evento) =>
+              evento.stopPropagation()
+            }
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "16px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  letterSpacing: "2px",
+                }}
+              >
+                VÉRTICE / CONTRATOS
+              </span>
+
+              <button
+                ref={fecharContratoRef}
+                type="button"
+                disabled={baixandoPdf}
+                onClick={() =>
+                  setContratoAberto(null)
+                }
+                aria-label="Fechar contrato"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#173f35",
+                  fontSize: "26px",
+                  cursor: "pointer",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div
+              style={{
+                marginTop: "30px",
+                marginBottom: "24px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "11px",
+                  letterSpacing: "2px",
+                  color: "#66736a",
+                }}
+              >
+                DOCUMENTO DE ALUGUEL
+              </span>
+
+              <h2
+                id="titulo-contrato"
+                style={{
+                  fontSize: "30px",
+                  margin: "12px 0",
+                  color: "#173f35",
+                }}
+              >
+                Seu contrato.
+              </h2>
+
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#66736a",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                Nº {contratoAberto.numero}
+              </p>
+            </div>
+
+            <div style={estilos.modalLinha}>
+              <span style={estilos.modalRotulo}>
+                SITUAÇÃO
+              </span>
+
+              <strong>
+                {contratoAberto.status === "EM_EXECUCAO"
+                  ? "Em execução"
+                  : contratoAberto.status}
+              </strong>
+            </div>
+
+            <div style={estilos.modalLinha}>
+              <span style={estilos.modalRotulo}>
+                DATA DE RETIRADA
+              </span>
+
+              <strong>
+                {formatarData(
+                  contratoAberto.dataInicio
+                )}
+              </strong>
+            </div>
+
+            <div style={estilos.modalLinha}>
+              <span style={estilos.modalRotulo}>
+                DATA DE DEVOLUÇÃO
+              </span>
+
+              <strong>
+                {formatarData(
+                  contratoAberto.dataFim
+                )}
+              </strong>
+            </div>
+
+            <div style={estilos.modalLinha}>
+              <span style={estilos.modalRotulo}>
+                VALOR TOTAL
+              </span>
+
+              <strong>
+                {formatarMoeda(
+                  contratoAberto.valorTotal
+                )}
+              </strong>
+            </div>
+
+            <div style={estilos.modalLinha}>
+              <span style={estilos.modalRotulo}>
+                GERADO EM
+              </span>
+
+              <strong>
+                {contratoAberto.geradoEm
+                  ? new Date(
+                      contratoAberto.geradoEm
+                    ).toLocaleString("pt-BR")
+                  : "—"}
+              </strong>
+            </div>
+
+            <p
+              style={{
+                marginTop: "26px",
+                fontSize: "12px",
+                lineHeight: 1.8,
+                color: "#66736a",
+              }}
+            >
+              Estas informações correspondem ao contrato
+              registrado no sistema VÉRTICE. O PDF
+              disponibilizado contém os dados do aluguel
+              e não substitui um instrumento contratual
+              completo com cláusulas e aceite das partes.
+            </p>
+
+            {/* BOTÕES DO CONTRATO */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+                marginTop: "24px",
+              }}
+            >
+              <button
+                type="button"
+                disabled={baixandoPdf}
+                onClick={() =>
+                  baixarContratoPdf(
+                    contratoAberto.pedidoId
+                  )
+                }
+                style={{
+                  ...estilos.editar,
+                  width: "100%",
+                  opacity: baixandoPdf ? 0.6 : 1,
+                  cursor: baixandoPdf
+                    ? "not-allowed"
+                    : "pointer",
+                }}
+              >
+                {baixandoPdf
+                  ? "Gerando PDF..."
+                  : "Baixar contrato em PDF"}
+              </button>
+
+              <button
+                type="button"
+                disabled={baixandoPdf}
+                onClick={() =>
+                  setContratoAberto(null)
+                }
+                style={{
+                  ...estilos.cancelar,
+                  width: "100%",
+                }}
+              >
+                Fechar contrato
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

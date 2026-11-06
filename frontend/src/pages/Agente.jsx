@@ -20,7 +20,7 @@ const statusNome = {
   RECUSADO: "Recusado",
 };
 
-async function mensagemDaResposta(resposta) {
+async function mensagemErro(resposta) {
   try {
     const dados = await resposta.json();
     return (
@@ -37,6 +37,7 @@ async function mensagemDaResposta(resposta) {
 export default function Agente() {
   const [pedidos, setPedidos] = useState([]);
   const [automoveis, setAutomoveis] = useState([]);
+  const [bancos, setBancos] = useState([]);
   const [analises, setAnalises] = useState({});
   const [formularios, setFormularios] = useState({});
   const [filtro, setFiltro] = useState("TODOS");
@@ -49,22 +50,34 @@ export default function Agente() {
   async function carregarDados() {
     setCarregando(true);
     setErro("");
+    setMensagem("");
 
     try {
-      const [rp, ra] = await Promise.all([
+      const [rp, ra, rb] = await Promise.all([
         fetch("/api/agente/pedidos", {
           credentials: "include",
         }),
         fetch("/api/automoveis", {
           credentials: "include",
         }),
+        fetch("/api/agente/bancos", {
+          credentials: "include",
+        }),
       ]);
 
       if (!rp.ok) {
-        throw new Error(await mensagemDaResposta(rp));
+        throw new Error(await mensagemErro(rp));
+      }
+
+      if (!rb.ok) {
+        throw new Error(
+          "Não foi possível carregar a lista de bancos: " +
+          (await mensagemErro(rb))
+        );
       }
 
       setPedidos(await rp.json());
+      setBancos(await rb.json());
 
       if (ra.ok) {
         setAutomoveis(await ra.json());
@@ -90,7 +103,7 @@ export default function Agente() {
     }));
   }
 
-  async function csrf() {
+  async function obterCsrf() {
     const resposta = await fetch("/api/auth/csrf", {
       credentials: "include",
     });
@@ -103,20 +116,20 @@ export default function Agente() {
   }
 
   async function requisicaoSegura(url, metodo, corpo) {
-    const token = await csrf();
+    const csrf = await obterCsrf();
 
     const resposta = await fetch(url, {
       method: metodo,
       credentials: "include",
       headers: {
-        [token.headerName]: token.token,
+        [csrf.headerName]: csrf.token,
         ...(corpo ? { "Content-Type": "application/json" } : {}),
       },
       ...(corpo ? { body: JSON.stringify(corpo) } : {}),
     });
 
     if (!resposta.ok) {
-      throw new Error(await mensagemDaResposta(resposta));
+      throw new Error(await mensagemErro(resposta));
     }
 
     return resposta.json();
@@ -134,7 +147,7 @@ export default function Agente() {
       );
 
       if (!resposta.ok) {
-        throw new Error(await mensagemDaResposta(resposta));
+        throw new Error(await mensagemErro(resposta));
       }
 
       const dados = await resposta.json();
@@ -153,6 +166,9 @@ export default function Agente() {
   async function registrarParecer(pedido) {
     const form = formularios[pedido.id] || {};
 
+    setErro("");
+    setMensagem("");
+
     if (!analises[pedido.id]) {
       setErro("Consulte primeiro os dados financeiros.");
       return;
@@ -163,42 +179,47 @@ export default function Agente() {
       return;
     }
 
-    const bancoAgenteId = form.bancoAgenteId?.trim() || null;
-    const valorCredito = form.valorCredito
-      ? Number(form.valorCredito)
-      : null;
+    const bancoAgenteId =
+      form.parecer === "FAVORAVEL"
+        ? form.bancoAgenteId || null
+        : null;
+
+    const valorCredito =
+      form.parecer === "FAVORAVEL" && form.valorCredito
+        ? Number(form.valorCredito)
+        : null;
 
     if (
-      form.parecer === "DESFAVORAVEL" &&
-      (bancoAgenteId || valorCredito !== null)
+      Boolean(bancoAgenteId) !==
+      (valorCredito !== null)
     ) {
       setErro(
-        "Parecer desfavorável não pode conceder crédito."
-      );
-      return;
-    }
-
-    if (
-      form.parecer === "FAVORAVEL" &&
-      Boolean(bancoAgenteId) !== (valorCredito !== null)
-    ) {
-      setErro(
-        "Para conceder crédito, informe o ID do agente e o valor."
+        "Selecione um banco e informe o valor do crédito, ou deixe ambos vazios."
       );
       return;
     }
 
     if (
       valorCredito !== null &&
-      (!Number.isFinite(valorCredito) || valorCredito <= 0)
+      (!Number.isFinite(valorCredito) ||
+        valorCredito <= 0 ||
+        valorCredito > Number(pedido.valorTotal))
     ) {
-      setErro("Informe um valor de crédito válido.");
+      setErro(
+        "O crédito deve ser positivo e não pode superar o valor do pedido."
+      );
+      return;
+    }
+
+    if (
+      bancoAgenteId &&
+      !bancos.some((banco) => banco.id === bancoAgenteId)
+    ) {
+      setErro("Selecione um banco válido da lista.");
       return;
     }
 
     setProcessando(pedido.id);
-    setErro("");
-    setMensagem("");
 
     try {
       const atualizado = await requisicaoSegura(
@@ -207,14 +228,8 @@ export default function Agente() {
         {
           parecer: form.parecer,
           justificativa: form.justificativa.trim(),
-          bancoAgenteId:
-            form.parecer === "FAVORAVEL"
-              ? bancoAgenteId
-              : null,
-          valorCredito:
-            form.parecer === "FAVORAVEL"
-              ? valorCredito
-              : null,
+          bancoAgenteId,
+          valorCredito,
         }
       );
 
@@ -243,11 +258,7 @@ export default function Agente() {
       return;
     }
 
-    if (
-      !window.confirm(
-        `Deseja realmente ${acao} este pedido?`
-      )
-    ) {
+    if (!window.confirm(`Deseja realmente ${acao} este pedido?`)) {
       return;
     }
 
@@ -337,6 +348,11 @@ export default function Agente() {
       : "Automóvel cadastrado";
   }
 
+  function nomeBanco(id) {
+    return bancos.find((b) => b.id === id)?.nome ||
+      "Banco não encontrado na lista de ativos";
+  }
+
   return (
     <main className="agente-pagina">
       <div className="agente-container">
@@ -345,10 +361,12 @@ export default function Agente() {
             <span className="agente-etiqueta">
               VÉRTICE / GESTÃO DE ALUGUÉIS
             </span>
+
             <h1>Painel do Agente</h1>
+
             <p>
-              Analise as solicitações e registre decisões
-              financeiras antes de aprovar os aluguéis.
+              Analise solicitações, registre pareceres
+              financeiros e gerencie contratos.
             </p>
           </div>
 
@@ -381,10 +399,12 @@ export default function Agente() {
             <span className="agente-etiqueta">
               CENTRAL DE SOLICITAÇÕES
             </span>
+
             <h2>Pedidos de aluguel</h2>
+
             <p>
-              Consulte os dados financeiros, registre o
-              parecer e decida sobre o pedido.
+              Consulte os dados financeiros, registre
+              o parecer e decida sobre o pedido.
             </p>
           </div>
 
@@ -457,7 +477,9 @@ export default function Agente() {
                         <span className="agente-pedido-label">
                           SOLICITAÇÃO DE ALUGUEL
                         </span>
+
                         <h3>{nomeCarro(pedido.automovelId)}</h3>
+
                         <small>
                           Pedido #{pedido.id.slice(0, 8).toUpperCase()}
                         </small>
@@ -475,10 +497,12 @@ export default function Agente() {
                         <span>Retirada</span>
                         <strong>{dataBR(pedido.dataInicio)}</strong>
                       </div>
+
                       <div>
                         <span>Devolução</span>
                         <strong>{dataBR(pedido.dataFim)}</strong>
                       </div>
+
                       <div>
                         <span>Solicitação</span>
                         <strong>
@@ -488,6 +512,7 @@ export default function Agente() {
                             : "Não informada"}
                         </strong>
                       </div>
+
                       <div>
                         <span>Valor total</span>
                         <strong className="agente-valor">
@@ -513,9 +538,7 @@ export default function Agente() {
 
                         {analise && (
                           <div className="agente-analise-detalhes">
-                            <strong>
-                              Dados financeiros do cliente
-                            </strong>
+                            <strong>Dados financeiros do cliente</strong>
 
                             <p>
                               Profissão:{" "}
@@ -532,18 +555,16 @@ export default function Agente() {
                               {moeda(analise.valorPedido)}
                             </p>
 
-                            {analise.empregos.map(
-                              (emprego, i) => (
-                                <p key={i}>
-                                  {emprego.empresa}:{" "}
-                                  {moeda(emprego.rendimento)}
-                                </p>
-                              )
-                            )}
+                            {analise.empregos.map((emprego, i) => (
+                              <p key={i}>
+                                {emprego.empresa}:{" "}
+                                {moeda(emprego.rendimento)}
+                              </p>
+                            ))}
 
                             <small>
-                              Informações declaradas pelo
-                              cliente, não verificadas.
+                              Informações declaradas pelo cliente,
+                              não verificadas.
                             </small>
                           </div>
                         )}
@@ -557,9 +578,13 @@ export default function Agente() {
                                 : "Desfavorável"}
                             </strong>
 
-                            <p>
-                              {pedido.justificativaFinanceira}
-                            </p>
+                            <p>{pedido.justificativaFinanceira}</p>
+
+                            {pedido.bancoAgenteId && (
+                              <p>
+                                Banco: {nomeBanco(pedido.bancoAgenteId)}
+                              </p>
+                            )}
 
                             {pedido.valorCredito != null && (
                               <p>
@@ -584,9 +609,7 @@ export default function Agente() {
                                   )
                                 }
                               >
-                                <option value="">
-                                  Selecione
-                                </option>
+                                <option value="">Selecione</option>
                                 <option value="FAVORAVEL">
                                   Favorável
                                 </option>
@@ -615,15 +638,11 @@ export default function Agente() {
 
                             {form.parecer === "FAVORAVEL" && (
                               <div className="agente-campos-credito">
-                                <p>
-                                  Crédito bancário opcional
-                                </p>
+                                <p>Crédito bancário opcional</p>
 
                                 <label>
-                                  ID do agente bancário
-                                  <input
-                                    type="text"
-                                    placeholder="UUID do agente"
+                                  Banco responsável
+                                  <select
                                     value={form.bancoAgenteId || ""}
                                     onChange={(e) =>
                                       atualizarFormulario(
@@ -632,16 +651,38 @@ export default function Agente() {
                                         e.target.value
                                       )
                                     }
-                                  />
+                                  >
+                                    <option value="">
+                                      Sem crédito bancário
+                                    </option>
+
+                                    {bancos.map((banco) => (
+                                      <option
+                                        key={banco.id}
+                                        value={banco.id}
+                                      >
+                                        {banco.nome}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </label>
+
+                                {bancos.length === 0 && (
+                                  <small>
+                                    Nenhum banco ativo cadastrado.
+                                    Cadastre ou classifique um agente
+                                    como banco no Supabase.
+                                  </small>
+                                )}
 
                                 <label>
                                   Valor do crédito (R$)
                                   <input
                                     type="number"
                                     min="0.01"
+                                    max={pedido.valorTotal}
                                     step="0.01"
-                                    placeholder="0,00"
+                                    placeholder="0.00"
                                     value={form.valorCredito || ""}
                                     onChange={(e) =>
                                       atualizarFormulario(
@@ -654,10 +695,10 @@ export default function Agente() {
                                 </label>
 
                                 <small>
-                                  Preencha os dois campos
-                                  somente quando houver crédito.
-                                  O ID deve pertencer a um
-                                  agente ativo cadastrado.
+                                  Para conceder crédito, selecione
+                                  um banco e informe o valor.
+                                  Para aluguel sem financiamento,
+                                  deixe o banco e o valor vazios.
                                 </small>
                               </div>
                             )}
@@ -679,8 +720,7 @@ export default function Agente() {
 
                     <div className="agente-pedido-rodape">
                       <span className="agente-cliente">
-                        Cliente:{" "}
-                        {pedido.clienteId.slice(0, 8)}
+                        Cliente: {pedido.clienteId.slice(0, 8)}
                       </span>
 
                       {pendente ? (

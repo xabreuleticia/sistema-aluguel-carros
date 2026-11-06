@@ -75,6 +75,14 @@ public class AgenteService {
             BigDecimal valorCredito
     ) {}
 
+    private Pedido buscarPedido(UUID id) {
+        return pedidoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Pedido não encontrado."
+                ));
+    }
+
     @Transactional(readOnly = true)
     public AnaliseFinanceira consultarAnaliseFinanceira(
             UUID pedidoId
@@ -112,14 +120,6 @@ public class AgenteService {
         );
     }
 
-    private Pedido buscarPedido(UUID id) {
-        return pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Pedido não encontrado."
-                ));
-    }
-
     @Transactional
     public Pedido registrarParecer(
             UUID pedidoId,
@@ -137,7 +137,7 @@ public class AgenteService {
         if (pedido.getParecerFinanceiro() != null) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Este pedido já possui um parecer financeiro."
+                    "Este pedido já possui parecer financeiro."
             );
         }
 
@@ -155,17 +155,10 @@ public class AgenteService {
                 ? ""
                 : dados.justificativa().trim();
 
-        if (justificativa.isBlank()) {
+        if (justificativa.isBlank() || justificativa.length() > 2000) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Informe a justificativa financeira."
-            );
-        }
-
-        if (justificativa.length() > 2000) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "A justificativa deve ter até 2000 caracteres."
+                    "A justificativa deve ter entre 1 e 2000 caracteres."
             );
         }
 
@@ -176,40 +169,38 @@ public class AgenteService {
             if (bancoId != null || credito != null) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Um parecer desfavorável não pode conceder crédito."
+                        "Parecer desfavorável não pode conceder crédito."
                 );
             }
         } else {
-            boolean bancoInformado = bancoId != null;
-            boolean creditoInformado = credito != null;
-
-            if (bancoInformado != creditoInformado) {
+            if ((bancoId == null) != (credito == null)) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Informe o banco e o valor do crédito juntos."
+                        "Selecione o banco e informe o valor do crédito."
                 );
             }
 
-            if (creditoInformado) {
+            if (credito != null) {
                 if (credito.compareTo(BigDecimal.ZERO) <= 0
                         || credito.compareTo(pedido.getValorTotal()) > 0) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "O crédito deve ser maior que zero e não pode superar o valor do pedido."
+                            "O crédito deve ser positivo e não superar o valor do pedido."
                     );
                 }
 
-                Usuario agente = usuarioRepository.findById(bancoId)
+                Usuario banco = usuarioRepository.findById(bancoId)
                         .orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Agente informado não encontrado."
+                                HttpStatus.BAD_REQUEST,
+                                "Banco não encontrado."
                         ));
 
-                if (!agente.isAtivo()
-                        || !"AGENTE".equals(agente.getPerfil())) {
+                if (!banco.isAtivo()
+                        || !"AGENTE".equals(banco.getPerfil())
+                        || !"BANCO".equals(banco.getTipoAgente())) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
-                            "Informe um agente ativo válido."
+                            "O agente selecionado não é um banco ativo."
                     );
                 }
             }
@@ -256,24 +247,21 @@ public class AgenteService {
             );
         }
 
-        boolean conflito = pedidoRepository
-                .existeReservaConflitante(
-                        pedido.getAutomovelId(),
-                        pedido.getDataInicio(),
-                        pedido.getDataFim()
-                );
-
-        if (conflito) {
+        if (pedidoRepository.existeReservaConflitante(
+                pedido.getAutomovelId(),
+                pedido.getDataInicio(),
+                pedido.getDataFim()
+        )) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Este automóvel já possui uma reserva aprovada para o período."
+                    "Já existe uma reserva aprovada para esse período."
             );
         }
 
         if (contratoRepository.existsByPedidoId(pedidoId)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Este pedido já possui um contrato."
+                    "Este pedido já possui contrato."
             );
         }
 
@@ -282,9 +270,7 @@ public class AgenteService {
 
         Contrato contrato = new Contrato();
         contrato.setPedidoId(aprovado.getId());
-        contrato.setNumero(
-                "VERT-" + UUID.randomUUID()
-        );
+        contrato.setNumero("VERT-" + UUID.randomUUID());
         contrato.setStatus("EM_EXECUCAO");
         contrato.setBancoAgenteId(aprovado.getBancoAgenteId());
         contrato.setValorCredito(aprovado.getValorCredito());
@@ -306,7 +292,6 @@ public class AgenteService {
         }
 
         pedido.setStatus("RECUSADO");
-
         return pedidoRepository.save(pedido);
     }
 }

@@ -25,6 +25,9 @@ public class Usuario {
     @Column(nullable = false)
     private String perfil;
 
+    @Column(name = "tipo_agente")
+    private String tipoAgente;
+
     @Column(nullable = false)
     private boolean ativo = true;
 
@@ -35,8 +38,7 @@ public class Usuario {
     )
     private OffsetDateTime criadoEm;
 
-    public Usuario() {
-    }
+    public Usuario() {}
 
     public UUID getId() {
         return id;
@@ -72,6 +74,14 @@ public class Usuario {
 
     public void setPerfil(String perfil) {
         this.perfil = perfil;
+    }
+
+    public String getTipoAgente() {
+        return tipoAgente;
+    }
+
+    public void setTipoAgente(String tipoAgente) {
+        this.tipoAgente = tipoAgente;
     }
 
     public boolean isAtivo() {

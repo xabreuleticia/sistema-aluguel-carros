@@ -37,6 +37,9 @@ public class Automovel {
     @Column(name = "proprietario_tipo", nullable = false)
     private String proprietarioTipo;
 
+    @Column(name = "proprietario_id")
+    private UUID proprietarioId;
+
     @Column(nullable = false)
     private boolean disponivel = true;
 
@@ -48,8 +51,7 @@ public class Automovel {
     )
     private BigDecimal valorDiaria;
 
-    public Automovel() {
-    }
+    public Automovel() {}
 
     public UUID getId() {
         return id;
@@ -101,6 +103,14 @@ public class Automovel {
 
     public void setProprietarioTipo(String proprietarioTipo) {
         this.proprietarioTipo = proprietarioTipo;
+    }
+
+    public UUID getProprietarioId() {
+        return proprietarioId;
+    }
+
+    public void setProprietarioId(UUID proprietarioId) {
+        this.proprietarioId = proprietarioId;
     }
 
     public boolean isDisponivel() {

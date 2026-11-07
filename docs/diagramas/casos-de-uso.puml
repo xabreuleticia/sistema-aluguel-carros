@@ -1,0 +1,43 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+actor Cliente
+actor "Agente de empresa" as Empresa
+actor "Agente bancário" as Banco
+actor Administrador as Admin
+rectangle "VÉRTICE" {
+  usecase "Autenticar-se" as Login
+  usecase "Cadastrar cliente" as Cadastro
+  usecase "Consultar veículos
+e disponibilidade" as Veiculos
+  usecase "Criar/consultar pedido" as Pedido
+  usecase "Editar/cancelar pedido" as Alterar
+  usecase "Atualizar perfil" as Perfil
+  usecase "Consultar contrato/PDF" as Contrato
+  usecase "Analisar pedido e
+registrar parecer" as Analise
+  usecase "Aprovar/recusar pedido" as Decisao
+  usecase "Gerenciar propriedade
+de automóvel" as Propriedade
+  usecase "Avaliar solicitação
+de crédito" as Credito
+  usecase "Gerenciar usuários" as Usuarios
+  usecase "Cadastrar agentes" as Agentes
+}
+Cliente --> Cadastro
+Cliente --> Login
+Cliente --> Veiculos
+Cliente --> Pedido
+Cliente --> Alterar
+Cliente --> Perfil
+Cliente --> Contrato
+Empresa --> Login
+Empresa --> Analise
+Empresa --> Decisao
+Empresa --> Propriedade
+Banco --> Login
+Banco --> Credito
+Admin --> Login
+Admin --> Usuarios
+Admin --> Agentes
+@enduml

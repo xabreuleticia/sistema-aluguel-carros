@@ -50,8 +50,6 @@ A validação contempla os principais requisitos do sistema, considerando as fun
 | T16 | Contrato PDF | A aplicação possui serviços para consulta de contratos e geração de documentos em PDF. | VALIDAÇÃO DOCUMENTAL |
 | T17 | Cadastro de agente | O painel administrativo disponibiliza o cadastro de agentes de empresa e agentes bancários. | VALIDAÇÃO DOCUMENTAL |
 | T18 | Gerenciamento de usuários | O administrador possui funcionalidades para consultar usuários e atualizar informações administrativas. | VALIDAÇÃO DOCUMENTAL |
-| T19 | Acesso indevido | O sistema utiliza Spring Security para restringir operações conforme as permissões de cada perfil. | VALIDAÇÃO DOCUMENTAL |
-| T20 | Conta inativa | O serviço de autenticação verifica a situação da conta e possui tratamento para impedir o login de usuários inativos. | VALIDAÇÃO DOCUMENTAL |
 
 ## 5. Evidências visuais
 
@@ -201,21 +199,6 @@ As imagens desta seção devem apresentar o resultado das funcionalidades do sis
 
 ![Gerenciamento de usuários](evidencias/usuario-atualizado.png)
 
-### T19 — Acesso indevido
-
-**Resultado identificado:** controle de autorização por perfil utilizando Spring Security.
-
-**Situação:** VALIDAÇÃO DOCUMENTAL.
-
-![Acesso negado](evidencias/acesso-negado.png)
-
-### T20 — Conta inativa
-
-**Resultado identificado:** verificação da situação da conta durante a autenticação.
-
-**Situação:** VALIDAÇÃO DOCUMENTAL.
-
-![Conta inativa](evidencias/conta-inativa.png)
 
 ## 6. Resumo da validação
 
